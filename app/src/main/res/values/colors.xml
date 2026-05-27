@@ -1,0 +1,22 @@
+<!-- res/values/colors.xml -->
+<resources>
+    <!-- Primärfarben -->
+    <color name="colorPrimary">#000000</color> <!-- Schwarz -->
+    <color name="colorPrimaryVariant">#1A1A1A</color> <!-- Dunkelgrau -->
+    <color name="colorOnPrimary">#FFFFFF</color> <!-- Weiß -->
+
+    <!-- Akzentfarben -->
+    <color name="colorSecondary">#FF0000</color> <!-- Rot -->
+    <color name="colorSecondaryVariant">#CC0000</color> <!-- Dunkelrot -->
+    <color name="colorOnSecondary">#FFFFFF</color> <!-- Weiß -->
+
+    <!-- Hintergrund -->
+    <color name="colorBackground">#000000</color> <!-- Schwarz -->
+    <color name="colorSurface">#1A1A1A</color> <!-- Dunkelgrau -->
+    <color name="colorOnBackground">#FFFFFF</color> <!-- Weiß -->
+    <color name="colorOnSurface">#FFFFFF</color> <!-- Weiß -->
+
+    <!-- Zusätzliche Farben -->
+    <color name="textColorPrimary">#FFFFFF</color> <!-- Weiß -->
+    <color name="textColorSecondary">#B3B3B3</color> <!-- Hellgrau -->
+</resources>

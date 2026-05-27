@@ -1,0 +1,6 @@
+<resources>
+    <dimen name="screen_margin">16dp</dimen>
+    <dimen name="gap_m">16dp</dimen>
+    <dimen name="gap_s">8dp</dimen>
+    <dimen name="btn_gap">4dp</dimen>
+</resources>
