@@ -32,38 +32,31 @@ class DeviceSelectionActivity1 : AppCompatActivity() {
     private lateinit var btnBack: Button
     private lateinit var btnStartScan: Button
     private lateinit var btnStopScan: Button
-    private var cbShowUnnamed: CheckBox? = null // optional, fällt auf true zurück
+    private var cbShowUnnamed: CheckBox? = null
     private lateinit var adapter: DeviceAdapter
 
     private var bluetoothAdapter: BluetoothAdapter? = null
     private val handler = Handler(Looper.getMainLooper())
     private var scanning = false
-
-    private val SCAN_PERIOD_MS = 12000L // auf 0 setzen, wenn du keinen Auto‑Stop willst
-    private val REQ_PERMS = 1001
-    private val REQ_ENABLE_LOCATION = 1002
-
-    // Wir halten ALLE gefundenen Geräte hier und filtern nur für die Anzeige
-    private val allDevices = LinkedHashMap<String, Device>() // addr -> Device (Insertion‑Order)
+    private val allDevices = LinkedHashMap<String, Device>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_device_selection)
 
-        val bm = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        bluetoothAdapter = bm.adapter
+        val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        bluetoothAdapter = bluetoothManager.adapter
 
         rvDevices = findViewById(R.id.rvDevices)
         btnBack = findViewById(R.id.btnBack)
         btnStartScan = findViewById(R.id.btnStartScan)
         btnStopScan = findViewById(R.id.btnStopScan)
-        // Checkbox muss im XML existieren: @+id/cbShowUnnamed. Falls nicht vorhanden -> immer anzeigen
         cbShowUnnamed = findViewById(R.id.cbShowUnnamed)
 
-        adapter = DeviceAdapter(mutableListOf()) { dev ->
+        adapter = DeviceAdapter(mutableListOf()) { device ->
             stopScan()
             val returnIntent = intent
-            returnIntent.putExtra("DEVICE_ADDRESS", dev.address)
+            returnIntent.putExtra(EXTRA_DEVICE_ADDRESS, device.address)
             setResult(Activity.RESULT_OK, returnIntent)
             finish()
         }
@@ -73,35 +66,38 @@ class DeviceSelectionActivity1 : AppCompatActivity() {
         btnStartScan.isEnabled = true
         btnStopScan.isEnabled = false
 
-        btnBack.setOnClickListener { stopScan(); setResult(Activity.RESULT_CANCELED); finish() }
+        btnBack.setOnClickListener {
+            stopScan()
+            setResult(Activity.RESULT_CANCELED)
+            finish()
+        }
         btnStartScan.setOnClickListener { ensurePermissionsThenScan() }
         btnStopScan.setOnClickListener { stopScan() }
-
         cbShowUnnamed?.setOnCheckedChangeListener { _, _ -> refreshList() }
     }
 
     override fun onPause() {
         super.onPause()
-        // Optional wie Scanner‑Apps: beim Verlassen stoppen
         stopScan()
     }
 
     private fun ensurePermissionsThenScan() {
-        val needed = mutableListOf<String>()
+        val neededPermissions = mutableListOf<String>()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            needed += Manifest.permission.BLUETOOTH_SCAN
-            needed += Manifest.permission.BLUETOOTH_CONNECT
+            neededPermissions += Manifest.permission.BLUETOOTH_SCAN
+            neededPermissions += Manifest.permission.BLUETOOTH_CONNECT
         } else {
-            needed += Manifest.permission.ACCESS_FINE_LOCATION
+            neededPermissions += Manifest.permission.ACCESS_FINE_LOCATION
         }
-        val toRequest = needed.filter {
+
+        val missingPermissions = neededPermissions.filter {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }
-        if (toRequest.isNotEmpty()) {
-            ActivityCompat.requestPermissions(this, toRequest.toTypedArray(), REQ_PERMS)
+        if (missingPermissions.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, missingPermissions.toTypedArray(), REQ_PERMS)
             return
         }
-        // Viele OEMs liefern ohne aktiviertes Location 0 Ergebnisse – auch mit neverForLocation
+
         if (!isLocationEnabled()) {
             Toast.makeText(this, "Bitte Standort einschalten (nur für den Scan).", Toast.LENGTH_SHORT).show()
             startActivityForResult(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS), REQ_ENABLE_LOCATION)
@@ -113,21 +109,32 @@ class DeviceSelectionActivity1 : AppCompatActivity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQ_PERMS) {
-            if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) ensurePermissionsThenScan()
-            else Toast.makeText(this, "Berechtigungen fehlen", Toast.LENGTH_SHORT).show()
+            if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+                ensurePermissionsThenScan()
+            } else {
+                Toast.makeText(this, "Berechtigungen fehlen", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQ_ENABLE_LOCATION) {
-            if (isLocationEnabled()) startScan() else Toast.makeText(this, "Standort weiterhin aus", Toast.LENGTH_SHORT).show()
+            if (isLocationEnabled()) {
+                startScan()
+            } else {
+                Toast.makeText(this, "Standort weiterhin aus", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
     private fun isLocationEnabled(): Boolean {
-        val lm = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        return try { lm.isLocationEnabled } catch (_: Exception) { true }
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return try {
+            locationManager.isLocationEnabled
+        } catch (_: Exception) {
+            true
+        }
     }
 
     private fun showUnnamedAllowed(): Boolean = cbShowUnnamed?.isChecked ?: true
@@ -143,16 +150,15 @@ class DeviceSelectionActivity1 : AppCompatActivity() {
 
         val scanner = adapter.bluetoothLeScanner ?: return
 
-        Toast.makeText(this, "Scanning…", Toast.LENGTH_SHORT).show()
-        Log.d("SCAN", "start nRF‑style scan")
+        Toast.makeText(this, "Scan läuft...", Toast.LENGTH_SHORT).show()
+        Log.d(TAG_SCAN, "start BLE scan")
 
-        // Reset Anzeige & Cache
         allDevices.clear()
         this.adapter.clear()
 
         val settings = ScanSettings.Builder()
-            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY) // maximale Rate
-            .setReportDelay(0L) // Ergebnisse sofort
+            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+            .setReportDelay(0L)
             .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
             .setNumOfMatches(ScanSettings.MATCH_NUM_MAX_ADVERTISEMENT)
             .build()
@@ -160,8 +166,6 @@ class DeviceSelectionActivity1 : AppCompatActivity() {
         scanning = true
         btnStartScan.isEnabled = false
         btnStopScan.isEnabled = true
-
-        // Wichtig: manche Stacks wollen *null* statt leerer Liste
         scanner.startScan(null, settings, scanCallback)
 
         if (SCAN_PERIOD_MS > 0) {
@@ -181,47 +185,53 @@ class DeviceSelectionActivity1 : AppCompatActivity() {
     private fun refreshList() {
         val allowUnnamed = showUnnamedAllowed()
         adapter.clear()
-        for (dev in allDevices.values) {
-            if (allowUnnamed || !dev.name.isNullOrBlank()) {
-                adapter.addDevice(dev)
+        for (device in allDevices.values) {
+            if (allowUnnamed || !device.name.isNullOrBlank()) {
+                adapter.addDevice(device)
             }
         }
     }
 
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
-            val d = result.device ?: return
-            val addr = d.address ?: return
-            val name = d.name // kann null/leer sein
-
-            val existing = allDevices[addr]
-            // Update, falls neu oder jetzt Name vorhanden
-            if (existing == null || (existing.name.isNullOrBlank() && !name.isNullOrBlank())) {
-                allDevices[addr] = Device(d, name, addr)
-                refreshList()
-            }
-            Log.d("SCAN", "hit rssi=${result.rssi} name=${name} addr=${addr}")
+            upsertScanResult(result)
+            Log.d(TAG_SCAN, "hit rssi=${result.rssi} addr=${result.device?.address}")
         }
 
         override fun onBatchScanResults(results: MutableList<ScanResult>) {
             var changed = false
-            for (r in results) {
-                val d = r.device ?: continue
-                val addr = d.address ?: continue
-                val name = d.name
-                val existing = allDevices[addr]
-                if (existing == null || (existing.name.isNullOrBlank() && !name.isNullOrBlank())) {
-                    allDevices[addr] = Device(d, name, addr)
-                    changed = true
-                }
+            for (result in results) {
+                changed = upsertScanResult(result, refresh = false) || changed
             }
             if (changed) refreshList()
-            Log.d("SCAN", "batch size=${results.size}")
+            Log.d(TAG_SCAN, "batch size=${results.size}")
         }
 
         override fun onScanFailed(errorCode: Int) {
-            Log.e("SCAN", "failed: $errorCode")
-            Toast.makeText(this@DeviceSelectionActivity1, "Scan failed: $errorCode", Toast.LENGTH_SHORT).show()
+            Log.e(TAG_SCAN, "failed: $errorCode")
+            Toast.makeText(this@DeviceSelectionActivity1, "Scan fehlgeschlagen: $errorCode", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun upsertScanResult(result: ScanResult, refresh: Boolean = true): Boolean {
+        val device = result.device ?: return false
+        val address = device.address ?: return false
+        val name = device.name
+        val existing = allDevices[address]
+        val shouldUpdate = existing == null || (existing.name.isNullOrBlank() && !name.isNullOrBlank())
+
+        if (shouldUpdate) {
+            allDevices[address] = Device(device, name, address)
+            if (refresh) refreshList()
+        }
+        return shouldUpdate
+    }
+
+    companion object {
+        private const val SCAN_PERIOD_MS = 12000L
+        private const val REQ_PERMS = 1001
+        private const val REQ_ENABLE_LOCATION = 1002
+        private const val EXTRA_DEVICE_ADDRESS = "DEVICE_ADDRESS"
+        private const val TAG_SCAN = "SCAN"
     }
 }

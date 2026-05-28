@@ -1,22 +1,23 @@
-<!-- res/values/colors.xml -->
 <resources>
-    <!-- Primärfarben -->
-    <color name="colorPrimary">#000000</color> <!-- Schwarz -->
-    <color name="colorPrimaryVariant">#1A1A1A</color> <!-- Dunkelgrau -->
-    <color name="colorOnPrimary">#FFFFFF</color> <!-- Weiß -->
+    <color name="colorPrimary">#101418</color>
+    <color name="colorPrimaryVariant">#0B0F12</color>
+    <color name="colorOnPrimary">#F6F8FA</color>
 
-    <!-- Akzentfarben -->
-    <color name="colorSecondary">#FF0000</color> <!-- Rot -->
-    <color name="colorSecondaryVariant">#CC0000</color> <!-- Dunkelrot -->
-    <color name="colorOnSecondary">#FFFFFF</color> <!-- Weiß -->
+    <color name="colorSecondary">#46D9A6</color>
+    <color name="colorSecondaryVariant">#2AA77E</color>
+    <color name="colorSecondarySoft">#334E47</color>
+    <color name="colorOnSecondary">#07110D</color>
 
-    <!-- Hintergrund -->
-    <color name="colorBackground">#000000</color> <!-- Schwarz -->
-    <color name="colorSurface">#1A1A1A</color> <!-- Dunkelgrau -->
-    <color name="colorOnBackground">#FFFFFF</color> <!-- Weiß -->
-    <color name="colorOnSurface">#FFFFFF</color> <!-- Weiß -->
+    <color name="colorAccent">#79A7FF</color>
+    <color name="colorWarning">#F59E0B</color>
 
-    <!-- Zusätzliche Farben -->
-    <color name="textColorPrimary">#FFFFFF</color> <!-- Weiß -->
-    <color name="textColorSecondary">#B3B3B3</color> <!-- Hellgrau -->
+    <color name="colorBackground">#101418</color>
+    <color name="colorSurface">#182026</color>
+    <color name="colorSurfaceRaised">#202A33</color>
+    <color name="colorOutline">#2E3A43</color>
+    <color name="colorOnBackground">#F6F8FA</color>
+    <color name="colorOnSurface">#F6F8FA</color>
+
+    <color name="textColorPrimary">#F6F8FA</color>
+    <color name="textColorSecondary">#AAB7C0</color>
 </resources>

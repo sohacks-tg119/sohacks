@@ -23,7 +23,7 @@ class DeviceAdapter(
 
     override fun onBindViewHolder(holder: DeviceViewHolder, position: Int) {
         val device = devices[position]
-        holder.tvDeviceName.text = device.name ?: "Unknown Device"
+        holder.tvDeviceName.text = device.name ?: "Unbekanntes Gerät"
         holder.tvDeviceAddress.text = device.address
         holder.itemView.setOnClickListener { onItemClick(device) }
     }
