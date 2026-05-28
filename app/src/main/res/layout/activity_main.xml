@@ -1,372 +1,498 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/constraintLayout"
+    android:id="@+id/mainScroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorBackground"
+    android:fillViewport="true"
     tools:context=".MainActivity">
 
-    <!-- Connect/Disconnect Button -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnConnect"
-        style="@style/Widget.MaterialComponents.Button"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Connect"
-        android:textColor="@color/colorOnPrimary"
-        android:backgroundTint="@color/colorSecondary"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_margin="16dp"
-        app:cornerRadius="8dp"/>
-
-    <!-- Mode Buttons -->
     <LinearLayout
-        android:id="@+id/modeButtonsLayout"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        app:layout_constraintTop_toBottomOf="@id/btnConnect"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnECO"
-            style="@style/Widget.MaterialComponents.Button"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="ECO"
-            android:textColor="@color/colorOnPrimary"
-            android:backgroundTint="@color/colorSecondary"
-            android:layout_margin="4dp"
-            app:cornerRadius="8dp"/>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnNormal"
-            style="@style/Widget.MaterialComponents.Button"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="Normal"
-            android:textColor="@color/colorOnPrimary"
-            android:backgroundTint="@color/colorSecondary"
-            android:layout_margin="0dp"
-            app:cornerRadius="8dp"/>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSport"
-            style="@style/Widget.MaterialComponents.Button"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="Sport"
-            android:textColor="@color/colorOnPrimary"
-            android:backgroundTint="@color/colorSecondary"
-            android:layout_margin="4dp"
-            app:cornerRadius="8dp"/>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnDev"
-            style="@style/Widget.MaterialComponents.Button"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="Dev"
-            android:textColor="@color/colorOnPrimary"
-            android:backgroundTint="@color/colorSecondary"
-            android:layout_margin="4dp"
-            app:cornerRadius="8dp"/>
-    </LinearLayout>
-
-    <!-- Speed Modifier Slider -->
-    <TextView
-        android:id="@+id/tvSpeedModifier"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Speed Modifier: 8 km/h"
-        android:textColor="@color/colorOnBackground"
-        android:textSize="16sp"
-        app:layout_constraintTop_toBottomOf="@id/modeButtonsLayout"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="3dp"
-        android:layout_marginStart="16dp"/>
-
-    <com.google.android.material.slider.Slider
-        android:id="@+id/sliderSpeedModifier"
-        android:layout_width="392dp"
-        android:layout_height="47dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:stepSize="1"
-        android:value="8"
-        android:valueFrom="8"
-        android:valueTo="30"
-        app:haloColor="@color/colorSecondary"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvSpeedModifier"
-        app:thumbColor="@color/colorSecondary"
-        app:trackColorActive="@color/colorSecondary"
-        app:trackColorInactive="@color/colorSecondaryVariant" />
-
-
-    <TextView
-        android:id="@+id/tvHotkeys"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hotkeys"
-        android:textColor="@color/colorOnBackground"
-        android:textSize="16sp"
-        app:layout_constraintTop_toBottomOf="@id/sliderSpeedModifier"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="1dp"
-        android:layout_marginStart="16dp"/>
-
-    <LinearLayout
-        android:id="@+id/hotkeyButtonsLayout"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        app:layout_constraintTop_toBottomOf="@id/tvHotkeys"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="1dp">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn8kmh"
-            style="@style/Widget.MaterialComponents.Button"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="8 km/h"
-            android:textColor="@color/colorOnPrimary"
-            android:backgroundTint="@color/colorSecondary"
-            android:layout_margin="4dp"
-            app:cornerRadius="8dp"/>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn15kmh"
-            style="@style/Widget.MaterialComponents.Button"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="15 km/h"
-            android:textColor="@color/colorOnPrimary"
-            android:backgroundTint="@color/colorSecondary"
-            android:layout_margin="4dp"
-            app:cornerRadius="8dp"/>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn20kmh"
-            style="@style/Widget.MaterialComponents.Button"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="20 km/h"
-            android:textColor="@color/colorOnPrimary"
-            android:backgroundTint="@color/colorSecondary"
-            android:layout_margin="4dp"
-            app:cornerRadius="8dp"/>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn25kmh"
-            style="@style/Widget.MaterialComponents.Button"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="25 km/h"
-            android:textColor="@color/colorOnPrimary"
-            android:backgroundTint="@color/colorSecondary"
-            android:layout_margin="4dp"
-            app:cornerRadius="8dp"/>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn30kmh"
-            style="@style/Widget.MaterialComponents.Button"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="30 km/h"
-            android:textColor="@color/colorOnPrimary"
-            android:backgroundTint="@color/colorSecondary"
-            android:layout_margin="4dp"
-            app:cornerRadius="8dp"/>
-    </LinearLayout>
-
-
-    <LinearLayout
-        android:id="@+id/layoutAdvancedToggle"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        app:layout_constraintTop_toBottomOf="@id/hotkeyButtonsLayout"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="1dp"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp">
-
-        <TextView
-            android:id="@+id/tvAdvanced"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Erweitert"
-            android:textColor="@color/colorOnBackground"
-            android:textSize="16sp"/>
-
-        <Switch
-            android:id="@+id/switchAdvanced"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:thumbTint="@color/colorSecondary"
-            android:trackTint="@color/colorSecondaryVariant"/>
-    </LinearLayout>
-
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/advancedContainer"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/layoutAdvancedToggle"
-        app:layout_constraintBottom_toTopOf="@id/lockButtonsLayout"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:fillViewport="true"
-        android:visibility="gone"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp">
+        android:orientation="vertical"
+        android:padding="20dp">
 
         <LinearLayout
-            android:id="@+id/layoutAdvancedContent"
+            android:id="@+id/topBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="12dp"
-            android:background="@drawable/bg_card">
-
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Speed modes: 1 - 254"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="14sp"
-                android:layout_marginBottom="4dp"/>
-
-            <Spinner
-                android:id="@+id/advanced_dropdown_1_to_254"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="#FFFFFF"
-                android:popupBackground="#000000"
-                android:backgroundTint="@color/colorSecondary"/>
-
-            <EditText
-                android:id="@+id/txt_cmd_hex"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Send HEX command"
-                android:inputType="text"
-                android:padding="8dp"
-                android:backgroundTint="@color/colorSecondary"
-                android:textColor="@color/colorOnBackground"
-                android:textColorHint="@color/textColorSecondary"
-                android:layout_marginTop="8dp"/>
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnSendHex"
-                style="@style/Widget.MaterialComponents.Button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Send Hex"
-                android:textColor="@color/colorOnPrimary"
-                android:backgroundTint="@color/colorSecondary"
-                android:layout_marginTop="8dp"
-                app:cornerRadius="8dp"/>
+                android:id="@+id/btnOpenModelList"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:minWidth="0dp"
+                android:padding="0dp"
+                android:text="&lt;"
+                android:textColor="@color/colorSecondary"
+                android:textSize="22sp" />
 
-            <TextView
-                android:id="@+id/tvBleOutputLabel"
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="BLE Output:"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="14sp"
-                android:layout_marginTop="12dp"/>
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/tvBleOutput"
-                android:layout_width="match_parent"
-                android:layout_height="72dp"
-                android:padding="8dp"
-                android:text="No data yet"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="13sp"
-                android:ellipsize="end"
-                android:scrollbars="vertical"
-                android:gravity="top"/>
+                <TextView
+                    android:id="@+id/tvAppTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="SO4 Controller"
+                    android:textColor="@color/colorOnBackground"
+                    android:textSize="26sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvAppSubtitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="BLE-Steuerung"
+                    android:textColor="@color/textColorSecondary"
+                    android:textSize="14sp" />
+            </LinearLayout>
         </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
 
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardTelemetryHeader"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="@color/colorSurfaceRaised"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/colorOutline"
+            app:strokeWidth="1dp">
 
-    <!-- Lock and Unlock Buttons -->
-    <LinearLayout
-        android:id="@+id/lockButtonsLayout"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="2dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="18dp"
+                android:paddingEnd="14dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnLock"
-            style="@style/Widget.MaterialComponents.Button"
-            android:layout_width="0dp"
-            android:layout_weight="1"
+                <TextView
+                    android:id="@+id/tvHeaderSpeed"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="monospace"
+                    android:text="00.0 km/h"
+                    android:textColor="@color/colorOnBackground"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <FrameLayout
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="12dp">
+
+                    <ImageView
+                        android:id="@+id/imgLightOff"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:contentDescription="@null"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/light_off" />
+
+                    <ImageView
+                        android:id="@+id/imgLightOn"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:contentDescription="@null"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/light_on"
+                        android:visibility="gone" />
+                </FrameLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardRideModes"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Lock"
-            android:textColor="@color/colorOnPrimary"
-            android:backgroundTint="@color/colorSecondary"
-            android:layout_margin="4dp"
-            app:cornerRadius="8dp"/>
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="@color/colorSurface"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/colorOutline"
+            app:strokeWidth="1dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnUnlock"
-            style="@style/Widget.MaterialComponents.Button"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="Unlock"
-            android:textColor="@color/colorOnPrimary"
-            android:backgroundTint="@color/colorSecondary"
-            android:layout_margin="4dp"
-            app:cornerRadius="8dp"/>
+            <LinearLayout
+                android:id="@+id/modeButtonsLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnChangeDevice"
-            style="@style/Widget.MaterialComponents.Button"
-            android:layout_width="0dp"
-            android:layout_weight="1"
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Fahrmodus"
+                    android:textColor="@color/colorOnBackground"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnECO"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:gravity="center"
+                        android:maxLines="1"
+                        android:text="ECO"
+                        android:textColor="@color/colorSecondary"
+                        app:autoSizeMaxTextSize="14sp"
+                        app:autoSizeMinTextSize="8sp"
+                        app:autoSizeStepGranularity="1sp"
+                        app:autoSizeTextType="uniform"
+                        app:cornerRadius="8dp"
+                        app:strokeColor="@color/colorSecondary" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnNormal"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:gravity="center"
+                        android:maxLines="1"
+                        android:text="Normal"
+                        android:textColor="@color/colorSecondary"
+                        app:autoSizeMaxTextSize="14sp"
+                        app:autoSizeMinTextSize="8sp"
+                        app:autoSizeStepGranularity="1sp"
+                        app:autoSizeTextType="uniform"
+                        app:cornerRadius="8dp"
+                        app:strokeColor="@color/colorSecondary" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSport"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:gravity="center"
+                        android:maxLines="1"
+                        android:text="Sport"
+                        android:textColor="@color/colorSecondary"
+                        app:autoSizeMaxTextSize="14sp"
+                        app:autoSizeMinTextSize="8sp"
+                        app:autoSizeStepGranularity="1sp"
+                        app:autoSizeTextType="uniform"
+                        app:cornerRadius="8dp"
+                        app:strokeColor="@color/colorSecondary" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnDev"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:gravity="center"
+                        android:maxLines="1"
+                        android:text="Dev"
+                        android:textColor="@color/colorSecondary"
+                        app:autoSizeMaxTextSize="14sp"
+                        app:autoSizeMinTextSize="8sp"
+                        app:autoSizeStepGranularity="1sp"
+                        app:autoSizeTextType="uniform"
+                        app:cornerRadius="8dp"
+                        app:strokeColor="@color/colorSecondary" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardSpeed"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="SCN"
-            android:textColor="@color/colorOnPrimary"
-            android:backgroundTint="@color/colorSecondary"
-            android:layout_margin="4dp"
-            app:cornerRadius="8dp"/>
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="@color/colorSurface"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/colorOutline"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:id="@+id/tvSpeedModifier"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Speed Modifier: 8 km/h"
+                    android:textColor="@color/colorOnBackground"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/sliderSpeedModifier"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:stepSize="1"
+                    android:value="8"
+                    android:valueFrom="8"
+                    android:valueTo="30"
+                    app:haloColor="@color/colorSecondarySoft"
+                    app:thumbColor="@color/colorSecondary"
+                    app:trackColorActive="@color/colorSecondary"
+                    app:trackColorInactive="@color/colorOutline" />
+
+                <LinearLayout
+                    android:id="@+id/hotkeyButtonsLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn8kmh"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_weight="1"
+                        android:text="8"
+                        android:textColor="@color/colorSecondary" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn15kmh"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_weight="1"
+                        android:text="15"
+                        android:textColor="@color/colorSecondary" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn20kmh"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_weight="1"
+                        android:text="20"
+                        android:textColor="@color/colorSecondary" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn25kmh"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_weight="1"
+                        android:text="25"
+                        android:textColor="@color/colorSecondary" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn30kmh"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_weight="1"
+                        android:text="30"
+                        android:textColor="@color/colorSecondary" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardAdvanced"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="@color/colorSurface"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/colorOutline"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:id="@+id/layoutAdvancedToggle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvAdvanced"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Erweitert"
+                        android:textColor="@color/colorOnBackground"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <Switch
+                        android:id="@+id/switchAdvanced"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:thumbTint="@color/colorSecondary"
+                        android:trackTint="@color/colorSecondarySoft" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/advancedContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:id="@+id/layoutAdvancedContent"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Speed modes: 1-254"
+                            android:textColor="@color/textColorSecondary"
+                            android:textSize="13sp" />
+
+                        <Spinner
+                            android:id="@+id/advanced_dropdown_1_to_254"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:layout_marginTop="8dp"
+                            android:backgroundTint="@color/colorSecondary"
+                            android:popupBackground="@color/colorSurface" />
+
+                        <EditText
+                            android:id="@+id/txt_cmd_hex"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:layout_marginTop="8dp"
+                            android:backgroundTint="@color/colorSecondary"
+                            android:hint="HEX-Kommando"
+                            android:inputType="text"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
+                            android:textColor="@color/colorOnBackground"
+                            android:textColorHint="@color/textColorSecondary" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnSendHex"
+                            style="@style/Widget.MaterialComponents.Button"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:layout_marginTop="8dp"
+                            android:backgroundTint="@color/colorAccent"
+                            android:text="Hex senden"
+                            android:textColor="@color/colorOnSecondary"
+                            app:cornerRadius="8dp" />
+
+                        <TextView
+                            android:id="@+id/tvBleOutputLabel"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="14dp"
+                            android:text="BLE Output"
+                            android:textColor="@color/textColorSecondary"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/tvBleOutput"
+                            android:layout_width="match_parent"
+                            android:layout_height="72dp"
+                            android:layout_marginTop="6dp"
+                            android:background="@drawable/bg_card"
+                            android:ellipsize="end"
+                            android:gravity="top"
+                            android:padding="10dp"
+                            android:scrollbars="vertical"
+                            android:text="Noch keine Daten"
+                            android:textColor="@color/colorOnBackground"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardConnection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="@color/colorSurface"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/colorOutline"
+            app:strokeWidth="1dp">
+
+            <Spinner
+                android:id="@+id/spinnerConnection"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:backgroundTint="@color/colorSecondary"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:popupBackground="@color/colorSurface" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <LinearLayout
+            android:id="@+id/lockButtonsLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="12dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnLock"
+                style="@style/Widget.MaterialComponents.Button"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:backgroundTint="@color/colorWarning"
+                android:text="Lock"
+                android:textColor="@color/colorOnSecondary"
+                app:cornerRadius="8dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnUnlock"
+                style="@style/Widget.MaterialComponents.Button"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:backgroundTint="@color/colorSecondary"
+                android:text="Unlock"
+                android:textColor="@color/colorOnSecondary"
+                app:cornerRadius="8dp" />
+        </LinearLayout>
     </LinearLayout>
-
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.core.widget.NestedScrollView>
