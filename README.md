@@ -1,5 +1,4 @@
-# SOHacks ReV2.2
-
+# SOHacks
 ⚠️ **AT YOUR OWN RISK** ⚠️
 
 SOHacks modifies scooter behavior, speed profiles and controller parameters.
