@@ -19,6 +19,7 @@ import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -32,6 +33,7 @@ import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.slider.Slider
+import java.util.Locale
 import java.util.UUID
 
 class MainActivity : AppCompatActivity() {
@@ -52,6 +54,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var speedButtons: Map<Int, MaterialButton>
 
     private lateinit var tvHeaderSpeed: TextView
+    private lateinit var tvHeaderTelemetryDetails: TextView
     private lateinit var imgLightOff: ImageView
     private lateinit var imgLightOn: ImageView
     private lateinit var sliderSpeedModifier: Slider
@@ -61,6 +64,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var advancedContainer: View
     private lateinit var layoutAdvancedContent: LinearLayout
     private lateinit var spinnerModes: Spinner
+    private lateinit var cbMoreSpeed: CheckBox
+    private lateinit var tvExtraCommandsLabel: TextView
+    private lateinit var extraCommandsContainer: LinearLayout
     private lateinit var txtCmdHex: EditText
     private lateinit var btnSendHex: MaterialButton
     private lateinit var tvBleOutput: TextView
@@ -71,6 +77,11 @@ class MainActivity : AppCompatActivity() {
     private var autoReconnectAttempted = false
     private var suppressConnectionSelection = false
     private var scooterConnected = false
+    private var latestDynamicSecret: Int? = null
+    private var sessionToken: String? = null
+    private var realtimeStarted = false
+    private var latestTelemetry: ScooterTelemetry? = null
+    private val encryptedRxBuffer = mutableListOf<Byte>()
     private val telemetryFrameBuffer = ScooterTelemetryFrameBuffer()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -111,6 +122,7 @@ class MainActivity : AppCompatActivity() {
         )
 
         tvHeaderSpeed = findViewById(R.id.tvHeaderSpeed)
+        tvHeaderTelemetryDetails = findViewById(R.id.tvHeaderTelemetryDetails)
         imgLightOff = findViewById(R.id.imgLightOff)
         imgLightOn = findViewById(R.id.imgLightOn)
         sliderSpeedModifier = findViewById(R.id.sliderSpeedModifier)
@@ -120,6 +132,9 @@ class MainActivity : AppCompatActivity() {
         advancedContainer = findViewById(R.id.advancedContainer)
         layoutAdvancedContent = findViewById(R.id.layoutAdvancedContent)
         spinnerModes = findViewById(R.id.advanced_dropdown_1_to_254)
+        cbMoreSpeed = findViewById(R.id.cbMoreSpeed)
+        tvExtraCommandsLabel = findViewById(R.id.tvExtraCommandsLabel)
+        extraCommandsContainer = findViewById(R.id.extraCommandsContainer)
         txtCmdHex = findViewById(R.id.txt_cmd_hex)
         btnSendHex = findViewById(R.id.btnSendHex)
         tvBleOutput = findViewById(R.id.tvBleOutput)
@@ -243,12 +258,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupCommandButtons() {
         btnOpenModelList.setOnClickListener { openModelSelection(required = false) }
-        btnECO.setOnClickListener { sendHex(selectedModel.commands.eco) }
-        btnNormal.setOnClickListener { sendHex(selectedModel.commands.normal) }
-        btnSport.setOnClickListener { sendHex(selectedModel.commands.sport) }
-        btnDev.setOnClickListener { sendHex(selectedModel.commands.dev) }
-        btnLock.setOnClickListener { sendHex(selectedModel.commands.lock) }
-        btnUnlock.setOnClickListener { sendHex(selectedModel.commands.unlock) }
+        btnECO.setOnClickListener { sendCatalogCommand(selectedModel.commands.eco, "ECO") }
+        btnNormal.setOnClickListener { sendCatalogCommand(selectedModel.commands.normal, "Normal") }
+        btnSport.setOnClickListener { sendCatalogCommand(selectedModel.commands.sport, "Sport") }
+        btnDev.setOnClickListener { sendCatalogCommand(selectedModel.commands.dev, "Dev") }
+        btnLock.setOnClickListener { sendCatalogCommand(selectedModel.commands.lock, "Lock") }
+        btnUnlock.setOnClickListener { sendCatalogCommand(selectedModel.commands.unlock, "Unlock") }
 
         speedButtons.forEach { (speed, button) ->
             button.setOnClickListener { sendSpeed(speed) }
@@ -256,6 +271,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupAdvancedControls() {
+        cbMoreSpeed.isChecked = prefs.getBoolean(KEY_MORE_SPEED, false)
+        cbMoreSpeed.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean(KEY_MORE_SPEED, isChecked).apply()
+            applySelectedModel()
+        }
+
         switchAdvanced.setOnCheckedChangeListener { _, isChecked ->
             advancedContainer.visibility = if (isChecked) View.VISIBLE else View.GONE
             advancedContainer.requestLayout()
@@ -291,10 +312,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupSpeedControls() {
         sliderSpeedModifier.addOnChangeListener { _, value, fromUser ->
-            val speed = value.toInt().coerceIn(
-                selectedModel.supportedSpeeds.first(),
-                selectedModel.supportedSpeeds.last()
-            )
+            val speeds = selectedModel.supportedSpeeds
+            if (speeds.isEmpty()) return@addOnChangeListener
+
+            val speedRange = currentSpeedRange()
+            val speed = value.toInt().coerceIn(speedRange.first, speedRange.last)
             tvSpeedModifier.text = "Speed Modifier: $speed km/h"
             if (fromUser) sendSpeed(speed)
         }
@@ -302,25 +324,102 @@ class MainActivity : AppCompatActivity() {
 
     private fun applySelectedModel() {
         val speeds = selectedModel.supportedSpeeds
-        sliderSpeedModifier.valueFrom = speeds.first().toFloat()
-        sliderSpeedModifier.valueTo = speeds.last().toFloat()
-        sliderSpeedModifier.stepSize = 1f
-        sliderSpeedModifier.value = sliderSpeedModifier.value
-            .toInt()
-            .coerceIn(speeds.first(), speeds.last())
-            .toFloat()
-        tvSpeedModifier.text = "Speed Modifier: ${sliderSpeedModifier.value.toInt()} km/h"
+        if (speeds.isEmpty()) {
+            sliderSpeedModifier.valueFrom = 0f
+            sliderSpeedModifier.valueTo = 1f
+            sliderSpeedModifier.stepSize = 1f
+            sliderSpeedModifier.value = 0f
+            sliderSpeedModifier.isEnabled = false
+            tvSpeedModifier.text = "Speed Modifier: nicht verfuegbar"
+        } else {
+            val speedRange = currentSpeedRange()
+            val nextValue = sliderSpeedModifier.value
+                .toInt()
+                .coerceIn(speedRange.first, speedRange.last)
+                .toFloat()
 
-        speedButtons.forEach { (speed, button) ->
-            val enabled = selectedModel.speedCommand(speed) != null
-            button.isEnabled = enabled
-            button.alpha = if (enabled) 1f else 0.45f
+            sliderSpeedModifier.valueFrom = minOf(sliderSpeedModifier.value, speedRange.first.toFloat())
+            sliderSpeedModifier.valueTo = maxOf(sliderSpeedModifier.value, speedRange.last.toFloat())
+            sliderSpeedModifier.stepSize = 1f
+            sliderSpeedModifier.value = nextValue
+            sliderSpeedModifier.valueFrom = speedRange.first.toFloat()
+            sliderSpeedModifier.valueTo = speedRange.last.toFloat()
+            sliderSpeedModifier.isEnabled = true
+            tvSpeedModifier.text = "Speed Modifier: ${sliderSpeedModifier.value.toInt()} km/h"
         }
 
-        val modeLabels = (1..selectedModel.maxAdvancedMode).map { "Mode $it" }
+        renderExtraCommands()
+
+        val modeLabels = if (selectedModel.maxAdvancedMode > 0) {
+            (1..selectedModel.maxAdvancedMode).map { "Mode $it" }
+        } else {
+            listOf("Keine Advanced-Modes")
+        }
         val modeAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, modeLabels)
         modeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerModes.adapter = modeAdapter
+        spinnerModes.isEnabled = selectedModel.maxAdvancedMode > 0
+        updateCommandAvailability()
+    }
+
+    private fun currentSpeedRange(): IntRange {
+        val speeds = selectedModel.supportedSpeeds
+        val requestedRange = if (cbMoreSpeed.isChecked) {
+            MORE_SPEED_MIN..MORE_SPEED_MAX
+        } else {
+            DEFAULT_SPEED_MIN..DEFAULT_SPEED_MAX
+        }
+        val first = maxOf(speeds.first(), requestedRange.first)
+        val last = minOf(speeds.last(), requestedRange.last)
+        return if (first <= last) first..last else speeds.first()..speeds.last()
+    }
+
+    private fun renderExtraCommands() {
+        extraCommandsContainer.removeAllViews()
+        val hasExtraCommands = selectedModel.extraCommands.isNotEmpty()
+        tvExtraCommandsLabel.visibility = if (hasExtraCommands) View.VISIBLE else View.GONE
+        extraCommandsContainer.visibility = if (hasExtraCommands) View.VISIBLE else View.GONE
+
+        selectedModel.extraCommands.forEach { command ->
+            val button = MaterialButton(this).apply {
+                text = command.label
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).also { it.topMargin = 6.dp }
+                setOnClickListener { sendCatalogCommand(command.command, command.label) }
+            }
+            extraCommandsContainer.addView(button)
+        }
+    }
+
+    private fun updateCommandAvailability() {
+        setCommandButtonState(btnECO, selectedModel.commands.eco)
+        setCommandButtonState(btnNormal, selectedModel.commands.normal)
+        setCommandButtonState(btnSport, selectedModel.commands.sport)
+        setCommandButtonState(btnDev, selectedModel.commands.dev)
+        setCommandButtonState(btnLock, selectedModel.commands.lock)
+        setCommandButtonState(btnUnlock, selectedModel.commands.unlock)
+
+        val speedCommand = selectedModel.commands.speedCommands.values.firstOrNull()
+        val speedReady = selectedModel.supportedSpeeds.isNotEmpty() && isCommandReady(speedCommand)
+        sliderSpeedModifier.isEnabled = speedReady
+        speedButtons.forEach { (speed, button) ->
+            val enabled = selectedModel.commands.speedCommands.containsKey(speed) && speedReady
+            button.isEnabled = enabled
+            button.alpha = if (enabled) 1f else 0.45f
+        }
+    }
+
+    private fun setCommandButtonState(button: MaterialButton, command: ScooterCommandSpec?) {
+        val enabled = isCommandReady(command)
+        button.isEnabled = enabled
+        button.alpha = if (enabled) 1f else 0.45f
+    }
+
+    private fun isCommandReady(command: ScooterCommandSpec?): Boolean {
+        if (command == null) return false
+        return !command.requiresDynamicSecret || latestDynamicSecret != null
     }
 
     private fun applyAdvancedPreference() {
@@ -378,6 +477,7 @@ class MainActivity : AppCompatActivity() {
             if (resultCode == Activity.RESULT_OK && modelId != null) {
                 selectedModel = ScooterCommandCatalog.findModel(modelId)
                 prefs.edit().putString(KEY_MODEL_ID, selectedModel.id).apply()
+                resetProtocolState()
                 applySelectedModel()
                 applyAdvancedPreference()
                 if (!startupCompleted) runInitialSetup()
@@ -392,7 +492,42 @@ class MainActivity : AppCompatActivity() {
         if (requestCode != REQ_PICK_DEVICE || resultCode != Activity.RESULT_OK) return
 
         val address = data?.getStringExtra(EXTRA_DEVICE_ADDRESS) ?: return
-        prefs.edit().putString(KEY_DEVICE_ADDRESS, address).apply()
+        val inferredModelId = data.getStringExtra(EXTRA_MODEL_ID)
+        if (inferredModelId == SO4_FAMILY_MODEL_ID) {
+            showSo4VariantDialog(address)
+        } else {
+            applyInferredModelAndConnect(address, inferredModelId)
+        }
+    }
+
+    private fun showSo4VariantDialog(address: String) {
+        val modelIds = arrayOf("so4", "so4_5_1", "so4_5_2")
+        val labels = modelIds
+            .map { ScooterCommandCatalog.findModel(it).displayName }
+            .toTypedArray()
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("SO4 erkannt")
+            .setItems(labels) { _, which ->
+                applyInferredModelAndConnect(address, modelIds[which])
+            }
+            .setNegativeButton("Abbrechen", null)
+            .show()
+    }
+
+    private fun applyInferredModelAndConnect(address: String, inferredModelId: String?) {
+        val prefsEdit = prefs.edit().putString(KEY_DEVICE_ADDRESS, address)
+        if (inferredModelId != null) {
+            val inferredModel = ScooterCommandCatalog.findModel(inferredModelId)
+            if (inferredModel.id == inferredModelId) {
+                selectedModel = inferredModel
+                prefsEdit.putString(KEY_MODEL_ID, selectedModel.id)
+                resetProtocolState()
+                applySelectedModel()
+                Toast.makeText(this, "Modell erkannt: ${selectedModel.displayName}", Toast.LENGTH_SHORT).show()
+            }
+        }
+        prefsEdit.apply()
         val device = bluetoothAdapter?.getRemoteDevice(address)
         bluetoothGatt = device?.connectGatt(this, false, gattCallback)
         updateConnectionDropdownLabel("Verbinde...")
@@ -405,10 +540,19 @@ class MainActivity : AppCompatActivity() {
         writeChar = null
         notifyChar = null
         scooterConnected = false
+        resetProtocolState()
         telemetryFrameBuffer.clear()
         resetTelemetryHeader()
         updateConnectionDropdownLabel("Nicht verbunden")
         if (showToast) Toast.makeText(this, "Getrennt", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun resetProtocolState() {
+        latestDynamicSecret = null
+        sessionToken = null
+        realtimeStarted = false
+        latestTelemetry = null
+        encryptedRxBuffer.clear()
     }
 
     private val gattCallback = object : BluetoothGattCallback() {
@@ -419,6 +563,7 @@ class MainActivity : AppCompatActivity() {
                 gatt.discoverServices()
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 scooterConnected = false
+                resetProtocolState()
                 telemetryFrameBuffer.clear()
                 runOnUiThread {
                     updateConnectionDropdownLabel("Nicht verbunden")
@@ -432,67 +577,147 @@ class MainActivity : AppCompatActivity() {
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
             if (status != BluetoothGatt.GATT_SUCCESS) return
 
-            var foundWrite: BluetoothGattCharacteristic? = null
-            var foundNotify: BluetoothGattCharacteristic? = null
-            outer@ for (service in gatt.services) {
-                var localWrite: BluetoothGattCharacteristic? = null
-                var localNotify: BluetoothGattCharacteristic? = null
-                for (characteristic in service.characteristics) {
-                    val props = characteristic.properties
-                    if (
-                        localWrite == null &&
-                        (props and BluetoothGattCharacteristic.PROPERTY_WRITE != 0 ||
-                            props and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE != 0)
-                    ) {
-                        localWrite = characteristic
-                    }
-                    if (localNotify == null && props and BluetoothGattCharacteristic.PROPERTY_NOTIFY != 0) {
-                        localNotify = characteristic
-                    }
-                    if (localWrite != null && localNotify != null) {
-                        foundWrite = localWrite
-                        foundNotify = localNotify
-                        break@outer
-                    }
-                }
-            }
+            val foundWrite = findProfileWriteCharacteristic(gatt)
+            val foundNotify = findProfileNotifyCharacteristic(gatt)
 
             writeChar = foundWrite
             notifyChar = foundNotify
-            enableNotifications(gatt)
 
             runOnUiThread {
                 val message = if (writeChar != null && notifyChar != null) {
-                    "WRITE/NOTIFY-Paar gefunden"
+                    "Profil-UUIDs gefunden"
                 } else {
-                    "Kein WRITE/NOTIFY-Paar gefunden"
+                    "Profil-UUIDs nicht gefunden. Falsches Modell?"
                 }
-                Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
+            }
+            if (writeChar != null && notifyChar != null) enableNotifications(gatt)
+        }
+
+        override fun onDescriptorWrite(gatt: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
+            if (status == BluetoothGatt.GATT_SUCCESS && descriptor.uuid == UUID.fromString(CCCD_UUID)) {
+                runOnUiThread { sendStartupCommands() }
             }
         }
 
         override fun onCharacteristicChanged(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
-            val data = characteristic.value ?: return
-            val hex = data.joinToString("") { "%02X".format(it) }
-            Log.d(TAG_BLE, "RX: $hex")
-            val telemetry = if (scooterConnected) telemetryFrameBuffer.append(data) else null
+            val rawData = characteristic.value ?: return
+            val plainData = decodeRxBytes(rawData) ?: return
+            val rawHex = rawData.joinToString("") { "%02X".format(it) }
+            val plainHex = plainData.joinToString("") { "%02X".format(it) }
+            Log.d(TAG_BLE, "RX raw: $rawHex")
+            Log.d(TAG_BLE, "RX plain: $plainHex")
+            ScooterTelemetryParser.extractSessionToken(plainHex)?.let { token ->
+                sessionToken = token
+            }
+            val telemetry = if (scooterConnected) {
+                telemetryFrameBuffer.append(plainData, selectedModel.protocolFamily)
+            } else {
+                null
+            }
+            telemetry?.dynamicSecret?.let { latestDynamicSecret = it }
             runOnUiThread {
-                tvBleOutput.text = hex
-                if (telemetry != null) updateTelemetryHeader(telemetry)
+                tvBleOutput.text = plainHex
+                if (telemetry != null) {
+                    latestTelemetry = mergeTelemetry(latestTelemetry, telemetry)
+                    updateTelemetryHeader(latestTelemetry ?: telemetry)
+                    updateCommandAvailability()
+                }
+                if (sessionToken != null && !realtimeStarted) {
+                    selectedModel.commands.realtimeStartCommand?.let {
+                        realtimeStarted = true
+                        sendCatalogCommand(it, "Realtime-Start", quiet = true)
+                    }
+                }
             }
         }
     }
 
     private fun updateTelemetryHeader(telemetry: ScooterTelemetry) {
         tvHeaderSpeed.text = telemetry.formattedSpeed
-        imgLightOn.visibility = if (telemetry.lightOn) View.VISIBLE else View.GONE
-        imgLightOff.visibility = if (telemetry.lightOn) View.GONE else View.VISIBLE
+        telemetry.lightOn?.let { lightOn ->
+            imgLightOn.visibility = if (lightOn) View.VISIBLE else View.GONE
+            imgLightOff.visibility = if (lightOn) View.GONE else View.VISIBLE
+        }
+        tvHeaderTelemetryDetails.text = formatTelemetryDetails(telemetry)
+    }
+
+    private fun mergeTelemetry(old: ScooterTelemetry?, new: ScooterTelemetry): ScooterTelemetry {
+        if (old == null) return new
+
+        return new.copy(
+            speedKmh = new.speedKmh ?: old.speedKmh,
+            lightOn = new.lightOn ?: old.lightOn,
+            currentA = new.currentA ?: old.currentA,
+            voltageV = new.voltageV ?: old.voltageV,
+            batteryLevel = new.batteryLevel ?: old.batteryLevel,
+            mileageOfRideKm = new.mileageOfRideKm ?: old.mileageOfRideKm,
+            totalMileageKm = new.totalMileageKm ?: old.totalMileageKm,
+            remainingMileageKm = new.remainingMileageKm ?: old.remainingMileageKm,
+            lockState = new.lockState ?: old.lockState,
+            speedMode = new.speedMode ?: old.speedMode,
+            fault = new.fault ?: old.fault,
+            protocolVersion = new.protocolVersion ?: old.protocolVersion,
+            displayVersion = new.displayVersion ?: old.displayVersion,
+            cpuVersion = new.cpuVersion ?: old.cpuVersion,
+            averageCurrentA = new.averageCurrentA ?: old.averageCurrentA,
+            averageSpeedKmh = new.averageSpeedKmh ?: old.averageSpeedKmh,
+            chargeCycle = new.chargeCycle ?: old.chargeCycle,
+            overflowDischarge = new.overflowDischarge ?: old.overflowDischarge,
+            charge = new.charge ?: old.charge,
+            energy = new.energy ?: old.energy,
+            speedInMiles = new.speedInMiles ?: old.speedInMiles,
+            errorCode = new.errorCode ?: old.errorCode,
+            timeOfRide = new.timeOfRide ?: old.timeOfRide,
+            dynamicSecret = new.dynamicSecret ?: old.dynamicSecret
+        )
     }
 
     private fun resetTelemetryHeader() {
+        latestTelemetry = null
         tvHeaderSpeed.text = "00.0 km/h"
+        tvHeaderTelemetryDetails.text = "Noch keine Telemetrie"
         imgLightOn.visibility = View.GONE
         imgLightOff.visibility = View.VISIBLE
+    }
+
+    private fun formatTelemetryDetails(telemetry: ScooterTelemetry): String {
+        val details = mutableListOf<String>()
+
+        telemetry.batteryLevel?.let { details += "Akku ${it.coerceIn(0, 100)}%" }
+        telemetry.voltageV?.let { details += "Volt ${it.oneDecimal()} V" }
+        telemetry.currentA?.let { details += "Strom ${it.oneDecimal()} A" }
+        telemetry.averageCurrentA?.let { details += "Avg ${it.oneDecimal()} A" }
+        telemetry.remainingMileageKm?.let { details += "Rest ${it.oneDecimal()} km" }
+        telemetry.mileageOfRideKm?.let { details += "Trip ${it.oneDecimal()} km" }
+        telemetry.totalMileageKm?.let { details += "Total ${it.noTrailingDecimal()} km" }
+        telemetry.timeOfRide?.let { details += "Ride ${it}s" }
+        telemetry.energy?.let { details += "Energy ${it.oneDecimal()}" }
+        telemetry.averageSpeedKmh?.let { details += "Avg ${it.oneDecimal()} km/h" }
+        telemetry.speedMode?.let { details += "Mode $it" }
+        telemetry.lockState?.let { details += if (it) "Locked" else "Unlocked" }
+        telemetry.charge?.let { details += if (it) "Charging" else "Not charging" }
+        telemetry.speedInMiles?.let { if (it) details += "Miles" }
+        telemetry.chargeCycle?.let { details += "Cycles $it" }
+        telemetry.overflowDischarge?.let { if (it != 0) details += "Overflow $it" }
+        telemetry.errorCode?.let {
+            if (it != 0) details += "Error 0x${it.toString(16).uppercase().padStart(2, '0')}"
+        }
+        telemetry.fault?.let {
+            if (it != 0) details += "Fault 0x${it.toString(16).uppercase().padStart(2, '0')}"
+        }
+
+        return if (details.isEmpty()) "Telemetrie empfangen" else details.joinToString("  |  ")
+    }
+
+    private fun Float.oneDecimal(): String = String.format(Locale.US, "%.1f", this)
+
+    private fun Float.noTrailingDecimal(): String {
+        return if (this % 1f == 0f) {
+            this.toInt().toString()
+        } else {
+            oneDecimal()
+        }
     }
 
     private fun enableNotifications(gatt: BluetoothGatt) {
@@ -503,13 +728,74 @@ class MainActivity : AppCompatActivity() {
         gatt.writeDescriptor(cccd)
     }
 
+    private fun findProfileWriteCharacteristic(gatt: BluetoothGatt): BluetoothGattCharacteristic? {
+        val profile = selectedModel.bleProfile
+        val service = gatt.getService(UUID.fromString(profile.serviceUuid)) ?: return null
+        return service.getCharacteristic(UUID.fromString(profile.writeUuid))
+    }
+
+    private fun findProfileNotifyCharacteristic(gatt: BluetoothGatt): BluetoothGattCharacteristic? {
+        val profile = selectedModel.bleProfile
+        val service = gatt.getService(UUID.fromString(profile.serviceUuid)) ?: return null
+        return service.getCharacteristic(UUID.fromString(profile.notifyUuid))
+    }
+
     private fun sendSpeed(speed: Int) {
-        val command = selectedModel.speedCommand(speed)
+        val command = selectedModel.speedCommand(speed, currentCommandRuntime())
         if (command == null) {
             Toast.makeText(this, "${selectedModel.displayName} unterstützt $speed km/h nicht", Toast.LENGTH_SHORT).show()
             return
         }
         sendHex(command)
+    }
+
+    private fun sendStartupCommands() {
+        selectedModel.commands.sessionTokenCommand?.let {
+            sendCatalogCommand(it, "Session-Token", quiet = true)
+            return
+        }
+
+        selectedModel.commands.startupCommand?.let {
+            sendCatalogCommand(it, "Startup", quiet = true)
+        }
+    }
+
+    private fun sendCatalogCommand(
+        commandSpec: ScooterCommandSpec?,
+        label: String,
+        quiet: Boolean = false
+    ) {
+        if (commandSpec == null) {
+            if (!quiet) Toast.makeText(this, "Kein $label-Kommando fuer ${selectedModel.displayName}", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (commandSpec.requiresSessionToken && sessionToken == null) {
+            selectedModel.commands.sessionTokenCommand?.resolve(currentCommandRuntime())?.let { sendHex(it) }
+            if (!quiet) {
+                Toast.makeText(this, "Session-Token wird angefragt, Kommando danach erneut senden", Toast.LENGTH_SHORT).show()
+            }
+            return
+        }
+
+        val command = commandSpec.resolve(currentCommandRuntime())
+        if (command == null) {
+            Log.w(
+                TAG_BLE,
+                "$label konnte nicht aufgeloest werden. model=${selectedModel.id}, secret=$latestDynamicSecret, token=$sessionToken"
+            )
+            if (!quiet) Toast.makeText(this, "$label konnte nicht aufgeloest werden", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        sendHex(command)
+    }
+
+    private fun currentCommandRuntime(): CommandRuntimeState {
+        return CommandRuntimeState(
+            dynamicSecret = latestDynamicSecret,
+            sessionToken = sessionToken
+        )
     }
 
     private fun sendHex(hex: String) {
@@ -520,15 +806,58 @@ class MainActivity : AppCompatActivity() {
 
         try {
             val cleanedHex = HexCodec.normalize(hex)
-            writeCharacteristic.value = HexCodec.toByteArray(cleanedHex)
-            bluetoothGatt?.writeCharacteristic(writeCharacteristic)
-            Log.d(TAG_BLE, "TX: $cleanedHex")
+            val txBytes = encodeTxBytes(cleanedHex)
+            writeCharacteristic.writeType =
+                if (writeCharacteristic.properties and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE != 0) {
+                    BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+                } else {
+                    BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+                }
+            writeCharacteristic.value = txBytes
+            val accepted = bluetoothGatt?.writeCharacteristic(writeCharacteristic) == true
+            Log.d(TAG_BLE, "TX plain: $cleanedHex")
+            Log.d(TAG_BLE, "TX accepted: $accepted")
         } catch (e: IllegalArgumentException) {
             Toast.makeText(this, e.message ?: "Ungültiges Hex", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             Toast.makeText(this, "Senden fehlgeschlagen: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
+
+    private fun encodeTxBytes(cleanedHex: String): ByteArray {
+        val aesKey = selectedModel.bleProfile.txAesKey
+        return if (aesKey == null) {
+            HexCodec.toByteArray(cleanedHex)
+        } else {
+            ScooterTransportCrypto.encryptHexToBytes(cleanedHex, aesKey)
+        }
+    }
+
+    private fun decodeRxBytes(bytes: ByteArray): ByteArray? {
+        val aesKey = selectedModel.bleProfile.rxAesKey ?: return bytes
+
+        encryptedRxBuffer += bytes.toList()
+        if (encryptedRxBuffer.size % AES_BLOCK_SIZE != 0) {
+            Log.w(TAG_BLE, "AES RX buffered length=${encryptedRxBuffer.size}; waiting for full block")
+            return null
+        }
+
+        return try {
+            val decrypted = ScooterTransportCrypto.decryptBytes(encryptedRxBuffer.toByteArray(), aesKey)
+            encryptedRxBuffer.clear()
+            val unpadded = decrypted
+                .dropLastWhile { it == 0.toByte() }
+                .toByteArray()
+            Log.d(TAG_BLE, "RX decrypted bytes=${decrypted.size}, unpadded=${unpadded.size}")
+            unpadded
+        } catch (e: Exception) {
+            encryptedRxBuffer.clear()
+            Log.e(TAG_BLE, "RX decrypt failed: ${e.message}")
+            null
+        }
+    }
+
+    private val Int.dp: Int get() = (this * resources.displayMetrics.density).toInt()
 
     companion object {
         private val CONNECTION_ACTIONS = mutableListOf("Verbindung: Nicht verbunden", "Verbinden", "Gerät wechseln", "Trennen")
@@ -542,13 +871,20 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_DEVICE_ADDRESS = "device_address"
         private const val KEY_DISCLAIMER_ACCEPTED = "disclaimerAccepted"
         private const val KEY_ADVANCED_OPTIONS = "advanced_options_enabled"
+        private const val KEY_MORE_SPEED = "more_speed_enabled"
         private const val EXTRA_DEVICE_ADDRESS = "DEVICE_ADDRESS"
         private const val EXTRA_MODEL_ID = "MODEL_ID"
         private const val EXTRA_MODEL_REQUIRED = "MODEL_REQUIRED"
+        private const val SO4_FAMILY_MODEL_ID = "so4_family"
         private const val REQ_BLE_PERMS = 2001
         private const val REQ_PICK_DEVICE = 2002
         private const val REQ_PICK_MODEL = 2003
         private const val CCCD_UUID = "00002902-0000-1000-8000-00805f9b34fb"
         private const val TAG_BLE = "BLE"
+        private const val AES_BLOCK_SIZE = 16
+        private const val DEFAULT_SPEED_MIN = 8
+        private const val DEFAULT_SPEED_MAX = 30
+        private const val MORE_SPEED_MIN = 1
+        private const val MORE_SPEED_MAX = 65
     }
 }
