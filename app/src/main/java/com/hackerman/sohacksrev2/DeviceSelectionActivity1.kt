@@ -57,6 +57,7 @@ class DeviceSelectionActivity1 : AppCompatActivity() {
             stopScan()
             val returnIntent = intent
             returnIntent.putExtra(EXTRA_DEVICE_ADDRESS, device.address)
+            device.inferredModelId?.let { returnIntent.putExtra(EXTRA_MODEL_ID, it) }
             setResult(Activity.RESULT_OK, returnIntent)
             finish()
         }
@@ -217,14 +218,51 @@ class DeviceSelectionActivity1 : AppCompatActivity() {
         val device = result.device ?: return false
         val address = device.address ?: return false
         val name = device.name
+        val inferredModelId = inferModelId(result)
         val existing = allDevices[address]
-        val shouldUpdate = existing == null || (existing.name.isNullOrBlank() && !name.isNullOrBlank())
+        val shouldUpdate = existing == null ||
+            (existing.name.isNullOrBlank() && !name.isNullOrBlank()) ||
+            (existing.inferredModelId == null && inferredModelId != null)
 
         if (shouldUpdate) {
-            allDevices[address] = Device(device, name, address)
+            allDevices[address] = Device(
+                device = device,
+                name = name ?: existing?.name,
+                address = address,
+                inferredModelId = inferredModelId ?: existing?.inferredModelId
+            )
             if (refresh) refreshList()
         }
         return shouldUpdate
+    }
+
+    private fun inferModelId(result: ScanResult): String? {
+        val manufacturerHex = result.scanRecord?.manufacturerSpecificData?.let { sparse ->
+            buildString {
+                for (index in 0 until sparse.size()) {
+                    append(sparse.valueAt(index).joinToString("") { "%02X".format(it) })
+                }
+            }
+        }
+
+        if (manufacturerHex?.startsWith("6001") == true) return "so6"
+
+        return inferModelId(result.device.name)
+    }
+
+    private fun inferModelId(name: String?): String? {
+        val normalized = name?.uppercase() ?: return null
+        return when {
+            normalized.startsWith("SFSO1") || normalized.startsWith("SFSC1") || normalized.startsWith("SFS1") -> "so1"
+            normalized.startsWith("SFSO2") || normalized.startsWith("SFSC2") || normalized.startsWith("SFS2") -> "so2_air"
+            normalized.startsWith("SFSO3") || normalized.startsWith("SFSC3") || normalized.startsWith("SFS3") -> "so3"
+            normalized.startsWith("SFSO4UL") -> "so4ul"
+            normalized.startsWith("SFSO4") || normalized.startsWith("SFS4") -> SO4_FAMILY_MODEL_ID
+            normalized.startsWith("SFSOMT") -> "somytier"
+            normalized.startsWith("SFSO5") || normalized.startsWith("SFSC5") -> "so5"
+            normalized.startsWith("SFSO6") || normalized.startsWith("SFSC6") -> "so6"
+            else -> null
+        }
     }
 
     companion object {
@@ -232,6 +270,8 @@ class DeviceSelectionActivity1 : AppCompatActivity() {
         private const val REQ_PERMS = 1001
         private const val REQ_ENABLE_LOCATION = 1002
         private const val EXTRA_DEVICE_ADDRESS = "DEVICE_ADDRESS"
+        private const val EXTRA_MODEL_ID = "MODEL_ID"
+        private const val SO4_FAMILY_MODEL_ID = "so4_family"
         private const val TAG_SCAN = "SCAN"
     }
 }
