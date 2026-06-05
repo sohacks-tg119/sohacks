@@ -1,23 +1,25 @@
 # SOHacks
 ⚠️ **AT YOUR OWN RISK** ⚠️
 ### Soflow tuning app
+### New version with support for many more scooters(Pre-release):
+https://github.com/sohacks-tg119/sohacks/releases/tag/2.4
 
 Tested:
-SO1
-SO4 Pro Gen2
+- SO1
+- SO4 Pro Gen2
 
 Implemented:
-SO1
-SO4 Pro Gen3
-SO4
-SO4 5.1
-SO4 5.2
-SO myTier
-SO2 Air
-SO3
-SO5
-SO4 UL
-SO6
+- SO1
+- SO4 Pro Gen3
+- SO4
+- SO4 5.1
+- SO4 5.2
+- SO myTier
+- SO2 Air
+- SO3
+- SO5
+- SO4 UL
+- SO6
 
 SOHacks modifies scooter behavior, speed profiles and controller parameters.
 By using this software, you acknowledge that you understand the risks and legal implications associated with scooter tuning and firmware modification.
