@@ -259,7 +259,6 @@ class DeviceSelectionActivity1 : AppCompatActivity() {
             normalized.startsWith("SFSO4UL") -> "so4ul"
             normalized.startsWith("SFSO4") || normalized.startsWith("SFS4") -> SO4_FAMILY_MODEL_ID
             normalized.startsWith("SFSOMT") -> "somytier"
-            normalized.startsWith("SFSO5") || normalized.startsWith("SFSC5") -> "so5"
             normalized.startsWith("SFSO6") || normalized.startsWith("SFSC6") -> "so6"
             else -> null
         }

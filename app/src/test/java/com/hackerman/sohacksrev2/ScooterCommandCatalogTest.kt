@@ -11,10 +11,10 @@ class ScooterCommandCatalogTest {
     fun catalog_containsKnownProfilesFromGuide() {
         val ids = ScooterCommandCatalog.models.map { it.id }.toSet()
 
-        assertTrue(ids.containsAll(listOf("so1", "so2_air", "so3", "so5", "so4", "so4_5_1", "so4_5_2", "somytier", "so4ul", "so6")))
+        assertTrue(ids.containsAll(listOf("so1", "so2_air", "so3", "so4", "so4_5_1", "so4_5_2", "somytier", "so4ul", "so6")))
         assertNotNull(ScooterCommandCatalog.findModel("s04_pro_gen2"))
         assertNotNull(ScooterCommandCatalog.findModel("s04_pro_gen3"))
-        assertEquals(16, ScooterCommandCatalog.models.size)
+        assertEquals(14, ScooterCommandCatalog.models.size)
     }
 
     @Test
@@ -151,21 +151,8 @@ class ScooterCommandCatalogTest {
     }
 
     @Test
-    fun so5_usesA0CommandsAndA0Bootstrap() {
-        val model = ScooterCommandCatalog.findModel("so5_a0_test")
-        val runtime = CommandRuntimeState(dynamicSecret = 0x7F)
-
-        assertEquals("D707A0000001A8", model.commands.startupCommand!!.resolve())
-        assertEquals("D707A07F010027", model.commands.eco!!.resolve(runtime))
-        assertEquals("D707A07F030029", model.commands.normal!!.resolve(runtime))
-        assertEquals("D707A07F05002B", model.commands.sport!!.resolve(runtime))
-        assertEquals("D707A07F03012A", model.commands.lock!!.resolve(runtime))
-        assertEquals("D707A07F030029", model.commands.unlock!!.resolve(runtime))
-    }
-
-    @Test
-    fun so2AirAndSo5_defaultToA4A2DynamicFamily() {
-        listOf("so2_air", "so5").forEach { modelId ->
+    fun so2AirAndSo3_defaultToA4A2DynamicFamily() {
+        listOf("so2_air", "so3").forEach { modelId ->
             val model = ScooterCommandCatalog.findModel(modelId)
             val runtime = CommandRuntimeState(dynamicSecret = 0x7F)
 

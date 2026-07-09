@@ -282,23 +282,6 @@ object ScooterCommandCatalog {
         )
     )
 
-    private val so5Commands = ScooterCommands(
-        eco = ScooterCommandSpec.dynamic(0xA0, 0x01, 0x00),
-        normal = ScooterCommandSpec.dynamic(0xA0, 0x03, 0x00),
-        sport = ScooterCommandSpec.dynamic(0xA0, 0x05, 0x00),
-        dev = ScooterCommandSpec.dynamic(0xA0, 0x05, 0x00),
-        lock = ScooterCommandSpec.dynamic(0xA0, 0x03, 0x01),
-        unlock = ScooterCommandSpec.dynamic(0xA0, 0x03, 0x00),
-        speedCommands = dynamicSpeedCommands,
-        startupCommand = ScooterCommandSpec.fixed(
-            D7CommandGenerator.build(
-                command = 0xA0,
-                prefix = 0x00,
-                payload = listOf(0x00, 0x01)
-            )
-        )
-    )
-
     private val tokenCommands = ScooterCommands(
         lock = ScooterCommandSpec.tokenTemplate("050C0101<TOKEN>"),
         unlock = ScooterCommandSpec.tokenTemplate("050106303030303030<TOKEN>"),
@@ -402,7 +385,7 @@ object ScooterCommandCatalog {
         ScooterModel(
             id = "so2_air",
             displayName = "SO2 Air",
-            description = "D7-Profil mit Live-Secret aus Realtime-Daten.",
+            description = "D7 Profil",
             commands = dynamicD7Commands,
             protocolFamily = ProtocolFamily.DYNAMIC_D7
         ),
@@ -416,22 +399,8 @@ object ScooterCommandCatalog {
         ScooterModel(
             id = "so3",
             displayName = "SO3",
-            description = "D7-Profil mit Live-Secret aus Realtime-Daten.",
+            description = "D7 Profil",
             commands = dynamicD7Commands,
-            protocolFamily = ProtocolFamily.DYNAMIC_D7
-        ),
-        ScooterModel(
-            id = "so5",
-            displayName = "SO5",
-            description = "D7-Profil mit Live-Secret aus Realtime-Daten.",
-            commands = dynamicD7Commands,
-            protocolFamily = ProtocolFamily.DYNAMIC_D7
-        ),
-        ScooterModel(
-            id = "so5_a0_test",
-            displayName = "SO5 A0 Test",
-            description = "Alternatives SO5-Testprofil mit A0-basierten Kommandos.",
-            commands = so5Commands,
             protocolFamily = ProtocolFamily.DYNAMIC_D7
         ),
         ScooterModel(

@@ -17,9 +17,18 @@ Implemented:
 - SO myTier
 - SO2 Air
 - SO3
-- SO5
 - SO4 UL
 - SO6
+
+Not supported:
+- SO ONE *
+- SO ONE Lite Pro
+- SO ONE Lite
+- SO4 Pro GT
+- SO4 Pro MAX
+- SO5.xx
+
+Additionally, no scooters that are currently sold by SOFLOW themselves are supported.
 
 SOHacks modifies scooter behavior, speed profiles and controller parameters.
 By using this software, you acknowledge that you understand the risks and legal implications associated with scooter tuning and firmware modification.
