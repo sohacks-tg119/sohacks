@@ -3,6 +3,13 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
 }
 
+val generatedLegalResDir = layout.buildDirectory.dir("generated/legal-res")
+val generateLegalResources by tasks.registering(Copy::class) {
+    from(rootProject.file("LICENSE"))
+    into(generatedLegalResDir.map { it.dir("raw") })
+    rename { "gpl_3_0.txt" }
+}
+
 android {
     namespace = "com.hackerman.sohacksrev2"
     compileSdk = 34
@@ -11,8 +18,8 @@ android {
         applicationId = "com.hackerman.sohacksrev2"
         minSdk = 25
         targetSdk = 34
-        versionCode = 25
-        versionName = "2.5"
+        versionCode = 26
+        versionName = "2.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -35,6 +42,9 @@ android {
     }
 }
 
+android.sourceSets.getByName("main").res.srcDir(generatedLegalResDir)
+tasks.named("preBuild").configure { dependsOn(generateLegalResources) }
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -44,6 +54,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.osmdroid.android)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -106,30 +106,65 @@ class ScooterTelemetryParserTest {
     }
 
     @Test
-    fun parse_so4ProDoesNotGuessGen2TelemetryFrameFields() {
+    fun parse_so4ProReadsLegacyV1RealtimeFields() {
         val frame = HexCodec.toByteArray(
-            "01 14 01 01 00 80 1E 00 5F 00 00 1E 15 0F 01 8B 01 F4 0C A3 D5 15 1D 0A"
+            "D7 14 1D 00 04 00 FA 01 E0 04 D2 00 24 25 00 7B 01 23 64 32"
         )
 
         val telemetry = ScooterTelemetryParser.parse(frame, ProtocolFamily.SO4_PRO)
 
-        assertNull(telemetry)
+        assertEquals(25.0f, telemetry!!.speedKmh!!)
+        assertEquals(48.0f, telemetry.voltageV)
+        assertEquals(123.4f, telemetry.currentA)
+        assertEquals(100, telemetry.batteryLevel)
+        assertEquals(12.3f, telemetry.mileageOfRideKm)
+        assertEquals(291.0f, telemetry.totalMileageKm)
     }
 
     @Test
-    fun parse_so4ProIgnoresUnknownGen2FrameAfterTdcStatus() {
+    fun parse_so4ProPrefersV51RealtimeFieldsOverTdcStatus() {
         val frame = HexCodec.toByteArray(
             "43 00 15 02 16 00 00 40 54 44 43 00 00 05 AB 64 DC " +
-                "01 14 01 01 00 80 1E 00 5F 00 00 1E 15 0F 01 8B 01 F4 0C A3 D5 15 1D 0A"
+                "D7 15 1D 00 04 00 FA 01 E0 04 D2 00 24 25 26 00 7B 01 23 64"
         )
 
         val telemetry = ScooterTelemetryParser.parse(frame, ProtocolFamily.SO4_PRO)
 
-        assertEquals(2.1f, telemetry!!.speedKmh!!)
-        assertTrue(telemetry.lightOn == true)
-        assertNull(telemetry.batteryLevel)
-        assertNull(telemetry.voltageV)
-        assertNull(telemetry.currentA)
+        assertEquals(25.0f, telemetry!!.speedKmh!!)
+        assertEquals(48.0f, telemetry.voltageV)
+        assertEquals(123.4f, telemetry.currentA)
+        assertEquals(100, telemetry.batteryLevel)
+    }
+
+    @Test
+    fun parse_so4V51AcceptsRealtimeDataBeforeChecksumByteArrives() {
+        val frameWithoutChecksum = HexCodec.toByteArray(
+            "D7 15 1D 00 04 00 FA 01 E0 04 D2 00 24 25 26 00 7B 01 23 64"
+        )
+
+        val telemetry = ScooterTelemetryParser.parse(
+            frameWithoutChecksum,
+            ProtocolFamily.D7_SO4_V51_PLUS
+        )
+
+        assertEquals(25.0f, telemetry!!.speedKmh!!)
+        assertEquals(48.0f, telemetry.voltageV)
+        assertEquals(123.4f, telemetry.currentA)
+        assertEquals(100, telemetry.batteryLevel)
+    }
+
+    @Test
+    fun parse_so4V1AcceptsLegacyPacketWithoutD7Marker() {
+        val frame = HexCodec.toByteArray(
+            "01 14 1D 00 04 00 FA 01 E0 04 D2 00 24 25 00 7B 01 23 64"
+        )
+
+        val telemetry = ScooterTelemetryParser.parse(frame, ProtocolFamily.D7_SO4_V1)
+
+        assertEquals(25.0f, telemetry!!.speedKmh!!)
+        assertEquals(48.0f, telemetry.voltageV)
+        assertEquals(123.4f, telemetry.currentA)
+        assertEquals(100, telemetry.batteryLevel)
     }
 
     @Test

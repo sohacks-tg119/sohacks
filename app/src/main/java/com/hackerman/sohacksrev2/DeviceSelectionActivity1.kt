@@ -82,6 +82,11 @@ class DeviceSelectionActivity1 : AppCompatActivity() {
         stopScan()
     }
 
+    override fun onResume() {
+        super.onResume()
+        AppPreferences.applyKeepScreenOn(this)
+    }
+
     private fun ensurePermissionsThenScan() {
         val neededPermissions = mutableListOf<String>()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

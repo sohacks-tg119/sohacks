@@ -160,6 +160,8 @@ object S04ModeCommandGenerator {
 }
 
 object ScooterCommandCatalog {
+    private const val MAX_ADVANCED_MODE = 254
+
     private val staticSpeedCommands = (1..65).associateWith { speed ->
         val tenths = speed * 10
         ScooterCommandSpec.fixed(
@@ -321,7 +323,8 @@ object ScooterCommandCatalog {
             description = "SO4 Pro Gen 2 unverschluesseltes Nordic-UART-Profil.",
             commands = s04Gen2Commands.copy(startupCommand = null),
             bleProfile = NORDIC_UART_PROFILE,
-            protocolFamily = ProtocolFamily.SO4_PRO
+            protocolFamily = ProtocolFamily.SO4_PRO,
+            maxAdvancedMode = MAX_ADVANCED_MODE
         ),
         ScooterModel(
             id = "s04_pro_gen3",
@@ -329,28 +332,32 @@ object ScooterCommandCatalog {
             description = "SO4 Gen3 / SO4T-v5.2 Profil.",
             commands = s04Gen2Commands,
             bleProfile = aesV52Profile,
-            protocolFamily = ProtocolFamily.D7_SO4_V51_PLUS
+            protocolFamily = ProtocolFamily.D7_SO4_V51_PLUS,
+            maxAdvancedMode = MAX_ADVANCED_MODE
         ),
         ScooterModel(
             id = "s04_pro_legacy_test",
             displayName = "SO4 Pro Legacy Test",
             description = "Altes gemischtes SO4-Pro-Profil zum Vergleichen, falls dein Scooter nur darauf reagiert.",
             commands = s04ProCommands,
-            protocolFamily = ProtocolFamily.LEGACY_STATUS
+            protocolFamily = ProtocolFamily.LEGACY_STATUS,
+            maxAdvancedMode = MAX_ADVANCED_MODE
         ),
         ScooterModel(
             id = "so4",
             displayName = "SO4",
             description = "SO4Tv1.0 D7-Profil mit Legacy-Telemetrie-Indizes.",
             commands = s04Commands,
-            protocolFamily = ProtocolFamily.D7_SO4_V1
+            protocolFamily = ProtocolFamily.D7_SO4_V1,
+            maxAdvancedMode = MAX_ADVANCED_MODE
         ),
         ScooterModel(
             id = "so4_5_1",
             displayName = "SO4 5.1",
             description = "SO4T-v5.1-Profil mit Connection-Status-, Lock- und Speed-Kommandos.",
             commands = s04T51Commands,
-            protocolFamily = ProtocolFamily.D7_SO4_V51_PLUS
+            protocolFamily = ProtocolFamily.D7_SO4_V51_PLUS,
+            maxAdvancedMode = MAX_ADVANCED_MODE
         ),
         ScooterModel(
             id = "so4_5_2",
@@ -358,7 +365,8 @@ object ScooterCommandCatalog {
             description = "SO4T-v5.2-Profil aus dem Command-Maker.",
             commands = s04T52Commands,
             bleProfile = aesV52Profile,
-            protocolFamily = ProtocolFamily.D7_SO4_V51_PLUS
+            protocolFamily = ProtocolFamily.D7_SO4_V51_PLUS,
+            maxAdvancedMode = MAX_ADVANCED_MODE
         ),
         ScooterModel(
             id = "somytier",
@@ -401,7 +409,8 @@ object ScooterCommandCatalog {
             displayName = "SO3",
             description = "D7 Profil",
             commands = dynamicD7Commands,
-            protocolFamily = ProtocolFamily.DYNAMIC_D7
+            protocolFamily = ProtocolFamily.DYNAMIC_D7,
+            maxAdvancedMode = MAX_ADVANCED_MODE
         ),
         ScooterModel(
             id = "so4ul",

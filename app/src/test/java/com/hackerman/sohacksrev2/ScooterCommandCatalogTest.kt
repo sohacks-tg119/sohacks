@@ -177,10 +177,26 @@ class ScooterCommandCatalogTest {
     }
 
     @Test
-    fun advancedModeCommand_isDisabledByDefault() {
-        val model = ScooterCommandCatalog.findModel("s04_pro_gen3")
+    fun advancedModeCommand_isAvailableForSo4AndSo3Profiles() {
+        val supportedModelIds = listOf(
+            "s04_pro_gen2",
+            "s04_pro_gen3",
+            "s04_pro_legacy_test",
+            "so4",
+            "so4_5_1",
+            "so4_5_2",
+            "so3"
+        )
 
-        assertNull(model.advancedModeCommand(1))
+        supportedModelIds.forEach { modelId ->
+            val model = ScooterCommandCatalog.findModel(modelId)
+
+            assertEquals(254, model.maxAdvancedMode)
+            assertEquals("D706A30001AA", model.advancedModeCommand(1))
+            assertEquals("D706A300FEA7", model.advancedModeCommand(254))
+            assertNull(model.advancedModeCommand(0))
+            assertNull(model.advancedModeCommand(255))
+        }
     }
 
     @Test

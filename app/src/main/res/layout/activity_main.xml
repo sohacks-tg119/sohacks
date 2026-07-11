@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+<androidx.core.widget.NestedScrollView
     android:id="@+id/mainScroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorBackground"
-    android:fillViewport="true"
-    tools:context=".MainActivity">
+    android:fillViewport="true">
 
     <!--
       fillViewport + gewichteter Spacer (spacerFlex) sorgen dafuer, dass sich der
@@ -849,3 +853,892 @@
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>
+
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/easyModeContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/colorBackground"
+        android:visibility="gone">
+
+        <org.osmdroid.views.MapView
+            android:id="@+id/easyMap"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="OpenStreetMap mit deiner aktuellen Position" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnEasyBack"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="top|start"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_chip"
+            android:contentDescription="Zurück zur Modellliste"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:minWidth="0dp"
+            android:padding="0dp"
+            android:text="&lt;"
+            android:textColor="@color/colorSecondary"
+            android:textSize="25sp"
+            app:backgroundTint="@null" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnEasySettings"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="top|start"
+            android:layout_marginStart="72dp"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_chip"
+            android:contentDescription="Einstellungen öffnen"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:minWidth="0dp"
+            android:padding="0dp"
+            android:text="⚙"
+            android:textColor="@color/colorOnSurface"
+            android:textSize="20sp"
+            app:backgroundTint="@null" />
+
+        <TextView
+            android:id="@+id/tvEasyConnectionStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/bg_chip"
+            android:elevation="8dp"
+            android:text="● Nicht verbunden"
+            android:textColor="@color/textColorSecondary"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvNewGuiPowerBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="70dp"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/bg_chip"
+            android:elevation="8dp"
+            android:fontFamily="monospace"
+            android:text="— W"
+            android:textColor="@color/colorSecondary"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvEasyLocationHint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_chip"
+            android:elevation="6dp"
+            android:text="Standort wird gesucht …"
+            android:textColor="@color/colorOnSurface"
+            android:textSize="13sp" />
+
+        <LinearLayout
+            android:id="@+id/easyFooter"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_easy_footer"
+            android:elevation="12dp"
+            android:orientation="vertical"
+            app:behavior_expandedOffset="72dp"
+            app:behavior_fitToContents="false"
+            app:behavior_hideable="false"
+            app:behavior_peekHeight="132dp"
+            app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="22dp">
+
+                <View
+                    android:layout_width="42dp"
+                    android:layout_height="4dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/bs_handle" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="110dp"
+                android:baselineAligned="false"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="18dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="start"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="SPANNUNG"
+                        android:textColor="@color/textColorSecondary"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvEasyVoltage"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:fontFamily="monospace"
+                        android:text="—"
+                        android:textColor="@color/colorOnSurface"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1.4"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvEasySpeed"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="monospace"
+                        android:text="0.0"
+                        android:textColor="@color/colorSecondary"
+                        android:textSize="38sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="km/h"
+                        android:textColor="@color/textColorSecondary"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="end"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="MODUS"
+                        android:textColor="@color/textColorSecondary"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvEasyMode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:ellipsize="end"
+                        android:fontFamily="monospace"
+                        android:maxLines="1"
+                        android:text="—"
+                        android:textColor="@color/colorOnSurface"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <androidx.core.widget.NestedScrollView
+                android:id="@+id/easySheetScroll"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:fillViewport="true"
+                android:clipToPadding="false"
+                android:overScrollMode="never">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingStart="20dp"
+                    android:paddingTop="8dp"
+                    android:paddingEnd="20dp"
+                    android:paddingBottom="96dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:letterSpacing="0.04"
+                        android:text="TELEMETRIE &amp; STEUERUNG"
+                        android:textColor="@color/textColorSecondary"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_tile"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:baselineAligned="false"
+                            android:orientation="horizontal">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Akku"
+                                    android:textColor="@color/textColorSecondary"
+                                    android:textSize="11sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/tvEasyBatteryValue"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="3dp"
+                                    android:fontFamily="monospace"
+                                    android:text="—"
+                                    android:textColor="@color/colorOnBackground"
+                                    android:textSize="19sp"
+                                    android:textStyle="bold" />
+
+                                <ProgressBar
+                                    android:id="@+id/progressEasyBattery"
+                                    style="?android:attr/progressBarStyleHorizontal"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="4dp"
+                                    android:layout_marginTop="7dp"
+                                    android:layout_marginEnd="10dp"
+                                    android:max="100"
+                                    android:progress="0"
+                                    android:progressDrawable="@drawable/gauge_progress" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Spannung"
+                                    android:textColor="@color/textColorSecondary"
+                                    android:textSize="11sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/tvEasyVoltageDetail"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="3dp"
+                                    android:fontFamily="monospace"
+                                    android:text="—"
+                                    android:textColor="@color/colorOnBackground"
+                                    android:textSize="19sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Strom"
+                                    android:textColor="@color/textColorSecondary"
+                                    android:textSize="11sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/tvEasyCurrentValue"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="3dp"
+                                    android:fontFamily="monospace"
+                                    android:text="—"
+                                    android:textColor="@color/colorOnBackground"
+                                    android:textSize="19sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="14dp"
+                            android:baselineAligned="false"
+                            android:orientation="horizontal">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Restweite"
+                                    android:textColor="@color/textColorSecondary"
+                                    android:textSize="11sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/tvEasyRangeValue"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="3dp"
+                                    android:fontFamily="monospace"
+                                    android:text="—"
+                                    android:textColor="@color/colorOnBackground"
+                                    android:textSize="19sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Trip"
+                                    android:textColor="@color/textColorSecondary"
+                                    android:textSize="11sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/tvEasyTripValue"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="3dp"
+                                    android:fontFamily="monospace"
+                                    android:text="—"
+                                    android:textColor="@color/colorOnBackground"
+                                    android:textSize="19sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Modus"
+                                    android:textColor="@color/textColorSecondary"
+                                    android:textSize="11sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/tvEasyModeValue"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="3dp"
+                                    android:fontFamily="monospace"
+                                    android:text="—"
+                                    android:textColor="@color/colorOnBackground"
+                                    android:textSize="19sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/tvEasyTelemetryDetails"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:ellipsize="end"
+                            android:maxLines="3"
+                            android:text="Noch keine Telemetrie"
+                            android:textColor="@color/textColorTertiary"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:letterSpacing="0.04"
+                        android:text="FAHRMODUS"
+                        android:textColor="@color/textColorSecondary"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnEasyECO"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="44dp"
+                            android:layout_marginEnd="6dp"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="center"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:maxLines="1"
+                            android:paddingStart="2dp"
+                            android:paddingEnd="2dp"
+                            android:text="ECO"
+                            android:textColor="@color/colorSecondary"
+                            android:textSize="12sp"
+                            app:cornerRadius="12dp"
+                            app:strokeColor="@color/colorSecondary" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnEasyNormal"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="44dp"
+                            android:layout_marginEnd="6dp"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="center"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:maxLines="1"
+                            android:paddingStart="2dp"
+                            android:paddingEnd="2dp"
+                            android:text="NORMAL"
+                            android:textColor="@color/colorSecondary"
+                            android:textSize="12sp"
+                            app:cornerRadius="12dp"
+                            app:strokeColor="@color/colorSecondary" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnEasySport"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="44dp"
+                            android:layout_marginEnd="6dp"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="center"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:maxLines="1"
+                            android:paddingStart="2dp"
+                            android:paddingEnd="2dp"
+                            android:text="SPORT"
+                            android:textColor="@color/colorSecondary"
+                            android:textSize="12sp"
+                            app:cornerRadius="12dp"
+                            app:strokeColor="@color/colorSecondary" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnEasyDev"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="44dp"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="center"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:maxLines="1"
+                            android:paddingStart="2dp"
+                            android:paddingEnd="2dp"
+                            android:text="DEV"
+                            android:textColor="@color/colorSecondary"
+                            android:textSize="12sp"
+                            app:cornerRadius="12dp"
+                            app:strokeColor="@color/colorSecondary" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="18dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:letterSpacing="0.04"
+                            android:text="SPEED MODIFIER"
+                            android:textColor="@color/textColorSecondary"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvEasySpeedModifier"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="monospace"
+                            android:text="20 km/h"
+                            android:textColor="@color/colorSecondary"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/sliderEasySpeedModifier"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:valueFrom="1"
+                        android:valueTo="65"
+                        android:stepSize="1"
+                        app:haloColor="@color/colorSecondarySoft"
+                        app:thumbColor="@color/colorSecondary"
+                        app:trackColorActive="@color/colorSecondary"
+                        app:trackColorInactive="@color/colorOutline" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnEasy8kmh"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            android:layout_width="0dp"
+                            android:layout_height="38dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:layout_weight="1"
+                            android:minWidth="0dp"
+                            android:text="8"
+                            android:textColor="@color/colorSecondary" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnEasy15kmh"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            android:layout_width="0dp"
+                            android:layout_height="38dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:layout_weight="1"
+                            android:minWidth="0dp"
+                            android:text="15"
+                            android:textColor="@color/colorSecondary" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnEasy20kmh"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            android:layout_width="0dp"
+                            android:layout_height="38dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:layout_weight="1"
+                            android:minWidth="0dp"
+                            android:text="20"
+                            android:textColor="@color/colorSecondary" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnEasy25kmh"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            android:layout_width="0dp"
+                            android:layout_height="38dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:layout_weight="1"
+                            android:minWidth="0dp"
+                            android:text="25"
+                            android:textColor="@color/colorSecondary" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnEasy30kmh"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            android:layout_width="0dp"
+                            android:layout_height="38dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:layout_weight="1"
+                            android:minWidth="0dp"
+                            android:text="30"
+                            android:textColor="@color/colorSecondary" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnEasyLock"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="46dp"
+                            android:layout_marginEnd="6dp"
+                            android:layout_weight="1"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:text="Sperren"
+                            android:textColor="@color/colorWarning"
+                            app:cornerRadius="14dp"
+                            app:strokeColor="@color/colorWarning" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnEasyUnlock"
+                            style="@style/Widget.MaterialComponents.Button"
+                            android:layout_width="0dp"
+                            android:layout_height="46dp"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:backgroundTint="@color/colorSecondary"
+                            android:text="Entsperren"
+                            android:textColor="@color/colorOnSecondary"
+                            app:cornerRadius="14dp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnEasyConnect"
+                            style="@style/Widget.MaterialComponents.Button"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:backgroundTint="@color/colorSecondary"
+                            android:text="Verbinden"
+                            android:textColor="@color/colorOnSecondary"
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            app:cornerRadius="14dp" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginTop="2dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnEasyChangeDevice"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="42dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:minWidth="0dp"
+                            android:text="Anderes Gerät"
+                            android:textColor="@color/colorSecondary"
+                            android:textSize="13sp" />
+
+                        <View
+                            android:layout_width="3dp"
+                            android:layout_height="3dp"
+                            android:layout_marginStart="8dp"
+                            android:layout_marginEnd="8dp"
+                            android:background="@drawable/dot_separator" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnEasyDisconnect"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="42dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:minWidth="0dp"
+                            android:text="Verbindung trennen"
+                            android:textColor="@color/textColorSecondary"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardEasyAdvanced"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        app:cardBackgroundColor="@color/colorSurface"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="0dp"
+                        app:strokeColor="@color/colorOutline"
+                        app:strokeWidth="1dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Erweitert"
+                                    android:textColor="@color/colorOnBackground"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold" />
+
+                                <Switch
+                                    android:id="@+id/switchEasyAdvanced"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:thumbTint="@color/colorSecondary"
+                                    android:trackTint="@color/colorSecondarySoft"
+                                    tools:ignore="UseSwitchCompatOrMaterialXml" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:id="@+id/easyAdvancedContainer"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:orientation="vertical"
+                                android:visibility="gone">
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="Speed modes: 1-254"
+                                    android:textColor="@color/textColorSecondary"
+                                    android:textSize="13sp" />
+
+                                <Spinner
+                                    android:id="@+id/easyAdvancedModeSpinner"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="48dp"
+                                    android:layout_marginTop="8dp"
+                                    android:backgroundTint="@color/colorSecondary"
+                                    android:popupBackground="@color/colorSurfaceRaised" />
+
+                                <CheckBox
+                                    android:id="@+id/cbEasyMoreSpeed"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="48dp"
+                                    android:layout_marginTop="8dp"
+                                    android:buttonTint="@color/colorSecondary"
+                                    android:text="More speed (1-65 km/h)"
+                                    android:textColor="@color/colorOnBackground"
+                                    android:textSize="14sp" />
+
+                                <TextView
+                                    android:id="@+id/tvEasyExtraCommandsLabel"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="10dp"
+                                    android:text="Modell-Kommandos"
+                                    android:textColor="@color/textColorSecondary"
+                                    android:textSize="13sp"
+                                    android:visibility="gone" />
+
+                                <LinearLayout
+                                    android:id="@+id/easyExtraCommandsContainer"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="6dp"
+                                    android:orientation="vertical"
+                                    android:visibility="gone" />
+
+                                <EditText
+                                    android:id="@+id/txtEasyCmdHex"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="48dp"
+                                    android:layout_marginTop="8dp"
+                                    android:autofillHints="off"
+                                    android:backgroundTint="@color/colorSecondary"
+                                    android:hint="HEX-Kommando"
+                                    android:inputType="text"
+                                    android:paddingStart="8dp"
+                                    android:paddingEnd="8dp"
+                                    android:textColor="@color/colorOnBackground"
+                                    android:textColorHint="@color/textColorSecondary" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btnEasySendHex"
+                                    style="@style/Widget.MaterialComponents.Button"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="48dp"
+                                    android:layout_marginTop="8dp"
+                                    android:insetTop="0dp"
+                                    android:insetBottom="0dp"
+                                    android:backgroundTint="@color/colorAccent"
+                                    android:text="Hex senden"
+                                    android:textColor="@color/colorOnSecondary"
+                                    app:cornerRadius="12dp" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="14dp"
+                                    android:text="BLE Output"
+                                    android:textColor="@color/textColorSecondary"
+                                    android:textSize="13sp" />
+
+                                <TextView
+                                    android:id="@+id/tvEasyBleOutput"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="72dp"
+                                    android:layout_marginTop="6dp"
+                                    android:background="@drawable/bg_card"
+                                    android:ellipsize="end"
+                                    android:fontFamily="monospace"
+                                    android:gravity="top"
+                                    android:padding="10dp"
+                                    android:scrollbars="vertical"
+                                    android:text="Noch keine Daten"
+                                    android:textColor="@color/colorOnBackground"
+                                    android:textSize="12sp" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
+            </androidx.core.widget.NestedScrollView>
+        </LinearLayout>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+</FrameLayout>

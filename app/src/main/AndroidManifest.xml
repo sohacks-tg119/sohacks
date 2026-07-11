@@ -7,7 +7,12 @@
     <!-- Legacy Permissions (< Android 12) -->
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <!-- OpenStreetMap-Kartenkacheln -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- Android 12+ (S) BLE Permissions -->
     <uses-permission
@@ -28,6 +33,8 @@
 
         <activity android:name=".DeviceSelectionActivity1" android:exported="false" />
         <activity android:name=".ModelSelectionActivity" android:exported="false" />
+        <activity android:name=".SettingsActivity" android:exported="false" />
+        <activity android:name=".OpenSourceLicensesActivity" android:exported="false" />
 
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>

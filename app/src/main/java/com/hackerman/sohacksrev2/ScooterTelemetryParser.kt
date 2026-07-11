@@ -52,7 +52,14 @@ object ScooterTelemetryParser {
     }
 
     private fun parseSo4ProRealtime(bytes: ByteArray): ScooterTelemetry? {
-        return parseLegacyStatusFrame(bytes)
+        // The legacy SO4 app uses the same 0x1D realtime packets for the
+        // SO4 Pro Gen2 as for the other SO4 generations. Depending on the
+        // controller firmware, Gen2 units report either the v1 or the v5.1+
+        // layout. Keep the small TDC status frame as a fallback because some
+        // Gen2 firmwares additionally emit it for speed/light updates.
+        return parseD7So4Realtime(bytes, v51OrNewer = true)
+            ?: parseD7So4Realtime(bytes, v51OrNewer = false)
+            ?: parseLegacyStatusFrame(bytes)
     }
 
     fun extractSessionToken(hex: String): String? {
@@ -98,8 +105,7 @@ object ScooterTelemetryParser {
     }
 
     private fun parseD7So4Realtime(bytes: ByteArray, v51OrNewer: Boolean): ScooterTelemetry? {
-        val minSize = if (v51OrNewer) MIN_D7_SO4_V51_SIZE else MIN_D7_SO4_V1_SIZE
-        val frameStart = findValidD7Frame(bytes, D7_REALTIME_CMD, minSize) ?: return null
+        val frameStart = findSo4RealtimeFrame(bytes, v51OrNewer) ?: return null
         val status = bytes[frameStart + 4].toUnsignedInt()
         val statusBits = status.bits8()
         val mileageIndex = if (v51OrNewer) frameStart + 15 else frameStart + 14
@@ -202,16 +208,31 @@ object ScooterTelemetryParser {
         )
     }
 
-    private fun findValidD7Frame(bytes: ByteArray, commandId: Int, minSize: Int): Int? {
-        if (bytes.size < minSize) return null
+    /**
+     * Finds the SO4 realtime packet the same way as the working legacy app:
+     * command byte 0x1D and the protocol-specific declared packet length are
+     * sufficient. In particular, do not require the checksum byte to be part
+     * of the current BLE notification. Nordic UART commonly delivers the 20
+     * data bytes before the final byte, while all displayed fields are already
+     * available. Some controllers also replace/omit the leading D7 marker;
+     * the legacy implementation intentionally did not validate that marker.
+     */
+    private fun findSo4RealtimeFrame(bytes: ByteArray, v51OrNewer: Boolean): Int? {
+        val requiredDataSize = if (v51OrNewer) MIN_D7_SO4_V51_DATA_SIZE else MIN_D7_SO4_V1_DATA_SIZE
+        if (bytes.size < requiredDataSize) return null
 
-        for (index in 0..bytes.size - minSize) {
-            if (bytes[index].toUnsignedInt() != 0xD7) continue
-            val length = bytes[index + 1].toUnsignedInt()
-            if (length < minSize || index + length > bytes.size) continue
-            if (bytes[index + 2].toUnsignedInt() != commandId) continue
-            if (hasValidD7Checksum(bytes, index, length)) return index
+        for (index in 0..bytes.size - requiredDataSize) {
+            if (bytes[index + 2].toUnsignedInt() != D7_REALTIME_CMD) continue
+
+            val declaredLength = bytes[index + 1].toUnsignedInt()
+            val matchesLayout = if (v51OrNewer) {
+                declaredLength >= D7_SO4_V51_DECLARED_LENGTH
+            } else {
+                declaredLength == D7_SO4_V1_DECLARED_LENGTH
+            }
+            if (matchesLayout) return index
         }
+
         return null
     }
 
@@ -265,12 +286,6 @@ object ScooterTelemetryParser {
         return null
     }
 
-    private fun hasValidD7Checksum(bytes: ByteArray, start: Int, length: Int): Boolean {
-        val checksumIndex = start + length - 1
-        val checksum = (start + 1 until checksumIndex).sumOf { bytes[it].toUnsignedInt() } and 0xFF
-        return checksum == bytes[checksumIndex].toUnsignedInt()
-    }
-
     private fun calculateDynamicSecret(bytes: ByteArray, frameStart: Int): Int? {
         if (bytes.size <= frameStart + 16) return null
 
@@ -317,8 +332,11 @@ object ScooterTelemetryParser {
     private const val MIN_STATUS_FRAME_SIZE = 0x11
     private const val D7_REALTIME_CMD = 0x1D
     private const val D7_STANDBY_CMD = 0x2D
-    private const val MIN_D7_SO4_V1_SIZE = 20
-    private const val MIN_D7_SO4_V51_SIZE = 20
+    private const val MIN_D7_SO4_V1_DATA_SIZE = 19
+    private const val MIN_D7_SO4_V51_DATA_SIZE = 20
+    private const val D7_SO4_V1_DECLARED_LENGTH = 0x14
+    private const val D7_SO4_V51_DECLARED_LENGTH = 0x15
+    private const val MIN_D7_SO4_V51_SIZE = MIN_D7_SO4_V51_DATA_SIZE
     private const val MIN_RAW_REALTIME_SIZE = 18
     private const val MIN_DYNAMIC_STANDBY_SIZE = 17
 }
