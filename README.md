@@ -1,8 +1,8 @@
 # SOHacks
 ⚠️ **AT YOUR OWN RISK** ⚠️
 ### Soflow tuning app
-### New version with support for many more scooters(Pre-release):
-https://github.com/sohacks-tg119/sohacks/releases/tag/2.4
+### Download now:
+https://github.com/sohacks-tg119/sohacks/releases/
 
 Tested:
 - SO1
