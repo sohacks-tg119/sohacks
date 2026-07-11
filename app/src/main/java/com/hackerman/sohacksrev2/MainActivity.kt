@@ -5,6 +5,9 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.res.ColorStateList
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -20,12 +23,24 @@ import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.ViewModelProvider
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.slider.Slider
+import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.CustomZoomButtonsController
+import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
+import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
+import java.util.Locale
 
 /**
  * Duenne UI-Schicht.
@@ -91,8 +106,56 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnSendHex: MaterialButton
     private lateinit var tvBleOutput: TextView
 
+    // --- Neue GUI ---
+    private lateinit var mainScroll: View
+    private lateinit var easyModeContainer: View
+    private lateinit var easyMap: MapView
+    private lateinit var easySheetScroll: NestedScrollView
+    private lateinit var easyBottomSheetBehavior: BottomSheetBehavior<View>
+    private lateinit var tvEasyConnectionStatus: TextView
+    private lateinit var tvNewGuiPowerBadge: TextView
+    private lateinit var tvEasyLocationHint: TextView
+    private lateinit var tvEasyVoltage: TextView
+    private lateinit var tvEasySpeed: TextView
+    private lateinit var tvEasyMode: TextView
+    private lateinit var tvEasyBatteryValue: TextView
+    private lateinit var tvEasyVoltageDetail: TextView
+    private lateinit var tvEasyCurrentValue: TextView
+    private lateinit var tvEasyRangeValue: TextView
+    private lateinit var tvEasyTripValue: TextView
+    private lateinit var tvEasyModeValue: TextView
+    private lateinit var tvEasyTelemetryDetails: TextView
+    private lateinit var progressEasyBattery: ProgressBar
+    private lateinit var tvEasySpeedModifier: TextView
+    private lateinit var sliderEasySpeedModifier: Slider
+    private lateinit var btnEasyECO: MaterialButton
+    private lateinit var btnEasyNormal: MaterialButton
+    private lateinit var btnEasySport: MaterialButton
+    private lateinit var btnEasyDev: MaterialButton
+    private lateinit var easySpeedButtons: Map<Int, MaterialButton>
+    private lateinit var btnEasyLock: MaterialButton
+    private lateinit var btnEasyUnlock: MaterialButton
+    private lateinit var btnEasyConnect: MaterialButton
+    private lateinit var btnEasyChangeDevice: MaterialButton
+    private lateinit var btnEasyDisconnect: MaterialButton
+    private lateinit var cardEasyAdvanced: View
+    private lateinit var switchEasyAdvanced: Switch
+    private lateinit var easyAdvancedContainer: View
+    private lateinit var easyAdvancedModeSpinner: Spinner
+    private lateinit var cbEasyMoreSpeed: CheckBox
+    private lateinit var tvEasyExtraCommandsLabel: TextView
+    private lateinit var easyExtraCommandsContainer: LinearLayout
+    private lateinit var txtEasyCmdHex: EditText
+    private lateinit var btnEasySendHex: MaterialButton
+    private lateinit var tvEasyBleOutput: TextView
+    private var myLocationOverlay: MyLocationNewOverlay? = null
+    private var newGuiVisible = false
+    private var locationPermissionRequested = false
+
     private var startupCompleted = false
     private var autoReconnectAttempted = false
+    private var initialDeviceScanInProgress = false
+    private var pendingInitialDeviceAddress: String? = null
     private var connectionState = ConnectionState.DISCONNECTED
     private var latestAvailability = CommandAvailability()
 
@@ -102,12 +165,15 @@ class MainActivity : AppCompatActivity() {
 
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
         prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        initialDeviceScanInProgress = savedInstanceState?.getBoolean(STATE_INITIAL_SCAN_IN_PROGRESS) ?: false
+        pendingInitialDeviceAddress = savedInstanceState?.getString(STATE_PENDING_DEVICE_ADDRESS)
 
         bindUi()
         setupCommandButtons()
         setupConnectionButtons()
         setupSpeedControls()
         setupAdvancedControls()
+        setupEasyMode()
         observeViewModel()
 
         resetTelemetryHeader()
@@ -118,6 +184,28 @@ class MainActivity : AppCompatActivity() {
         applyAdvancedPreference()
 
         runInitialSetup()
+        applyNewGuiPreference(requestLocation = startupCompleted)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        AppPreferences.applyKeepScreenOn(this)
+        if (::prefs.isInitialized) {
+            applyAdvancedPreference()
+            applyNewGuiPreference(requestLocation = true)
+        }
+    }
+
+    override fun onPause() {
+        if (::easyMap.isInitialized) easyMap.onPause()
+        myLocationOverlay?.disableMyLocation()
+        super.onPause()
+    }
+
+    override fun onDestroy() {
+        myLocationOverlay?.disableMyLocation()
+        if (::easyMap.isInitialized) easyMap.onDetach()
+        super.onDestroy()
     }
 
     // ---------------------------------------------------------------------
@@ -125,6 +213,7 @@ class MainActivity : AppCompatActivity() {
     // ---------------------------------------------------------------------
 
     private fun bindUi() {
+        mainScroll = findViewById(R.id.mainScroll)
         btnOpenModelList = findViewById(R.id.btnOpenModelList)
         tvAppTitle = findViewById(R.id.tvAppTitle)
         tvAppSubtitle = findViewById(R.id.tvAppSubtitle)
@@ -174,6 +263,52 @@ class MainActivity : AppCompatActivity() {
         txtCmdHex = findViewById(R.id.txt_cmd_hex)
         btnSendHex = findViewById(R.id.btnSendHex)
         tvBleOutput = findViewById(R.id.tvBleOutput)
+
+        easyModeContainer = findViewById(R.id.easyModeContainer)
+        easyMap = findViewById(R.id.easyMap)
+        easySheetScroll = findViewById(R.id.easySheetScroll)
+        tvEasyConnectionStatus = findViewById(R.id.tvEasyConnectionStatus)
+        tvNewGuiPowerBadge = findViewById(R.id.tvNewGuiPowerBadge)
+        tvEasyLocationHint = findViewById(R.id.tvEasyLocationHint)
+        tvEasyVoltage = findViewById(R.id.tvEasyVoltage)
+        tvEasySpeed = findViewById(R.id.tvEasySpeed)
+        tvEasyMode = findViewById(R.id.tvEasyMode)
+        tvEasyBatteryValue = findViewById(R.id.tvEasyBatteryValue)
+        tvEasyVoltageDetail = findViewById(R.id.tvEasyVoltageDetail)
+        tvEasyCurrentValue = findViewById(R.id.tvEasyCurrentValue)
+        tvEasyRangeValue = findViewById(R.id.tvEasyRangeValue)
+        tvEasyTripValue = findViewById(R.id.tvEasyTripValue)
+        tvEasyModeValue = findViewById(R.id.tvEasyModeValue)
+        tvEasyTelemetryDetails = findViewById(R.id.tvEasyTelemetryDetails)
+        progressEasyBattery = findViewById(R.id.progressEasyBattery)
+        tvEasySpeedModifier = findViewById(R.id.tvEasySpeedModifier)
+        sliderEasySpeedModifier = findViewById(R.id.sliderEasySpeedModifier)
+        btnEasyECO = findViewById(R.id.btnEasyECO)
+        btnEasyNormal = findViewById(R.id.btnEasyNormal)
+        btnEasySport = findViewById(R.id.btnEasySport)
+        btnEasyDev = findViewById(R.id.btnEasyDev)
+        easySpeedButtons = mapOf(
+            8 to findViewById(R.id.btnEasy8kmh),
+            15 to findViewById(R.id.btnEasy15kmh),
+            20 to findViewById(R.id.btnEasy20kmh),
+            25 to findViewById(R.id.btnEasy25kmh),
+            30 to findViewById(R.id.btnEasy30kmh)
+        )
+        btnEasyLock = findViewById(R.id.btnEasyLock)
+        btnEasyUnlock = findViewById(R.id.btnEasyUnlock)
+        btnEasyConnect = findViewById(R.id.btnEasyConnect)
+        btnEasyChangeDevice = findViewById(R.id.btnEasyChangeDevice)
+        btnEasyDisconnect = findViewById(R.id.btnEasyDisconnect)
+        cardEasyAdvanced = findViewById(R.id.cardEasyAdvanced)
+        switchEasyAdvanced = findViewById(R.id.switchEasyAdvanced)
+        easyAdvancedContainer = findViewById(R.id.easyAdvancedContainer)
+        easyAdvancedModeSpinner = findViewById(R.id.easyAdvancedModeSpinner)
+        cbEasyMoreSpeed = findViewById(R.id.cbEasyMoreSpeed)
+        tvEasyExtraCommandsLabel = findViewById(R.id.tvEasyExtraCommandsLabel)
+        easyExtraCommandsContainer = findViewById(R.id.easyExtraCommandsContainer)
+        txtEasyCmdHex = findViewById(R.id.txtEasyCmdHex)
+        btnEasySendHex = findViewById(R.id.btnEasySendHex)
+        tvEasyBleOutput = findViewById(R.id.tvEasyBleOutput)
     }
 
     // ---------------------------------------------------------------------
@@ -189,6 +324,7 @@ class MainActivity : AppCompatActivity() {
         }
         viewModel.bleOutput.observe(this) { hex ->
             tvBleOutput.text = hex ?: "Noch keine Daten"
+            tvEasyBleOutput.text = hex ?: "Noch keine Daten"
         }
         viewModel.toast.observe(this) { event ->
             event.getIfNotHandled()?.let { Toast.makeText(this, it, Toast.LENGTH_SHORT).show() }
@@ -198,16 +334,20 @@ class MainActivity : AppCompatActivity() {
     private fun updateConnectionUi(state: ConnectionState) {
         connectionState = state
         tvConnectionStatus.text = "● ${state.label}"
+        tvEasyConnectionStatus.text = "● ${state.label}"
         val colorRes = when (state) {
             ConnectionState.CONNECTED -> R.color.colorSecondary
             ConnectionState.CONNECTING -> R.color.colorWarning
             ConnectionState.DISCONNECTED -> R.color.textColorSecondary
         }
         tvConnectionStatus.setTextColor(ContextCompat.getColor(this, colorRes))
+        tvEasyConnectionStatus.setTextColor(ContextCompat.getColor(this, colorRes))
 
         val busy = state == ConnectionState.CONNECTED || state == ConnectionState.CONNECTING
         btnConnect.isEnabled = !busy
         btnDisconnect.isEnabled = busy
+        btnEasyConnect.isEnabled = !busy
+        btnEasyDisconnect.isEnabled = busy
     }
 
     private fun onModelChanged(model: ScooterModel) {
@@ -225,10 +365,22 @@ class MainActivity : AppCompatActivity() {
         setModeButtonState(btnDev, av.devEnabled)
         setModeButtonState(btnLock, av.lockEnabled)
         setModeButtonState(btnUnlock, av.unlockEnabled)
+        setModeButtonState(btnEasyECO, av.ecoEnabled)
+        setModeButtonState(btnEasyNormal, av.normalEnabled)
+        setModeButtonState(btnEasySport, av.sportEnabled)
+        setModeButtonState(btnEasyDev, av.devEnabled)
+        setModeButtonState(btnEasyLock, av.lockEnabled)
+        setModeButtonState(btnEasyUnlock, av.unlockEnabled)
 
         applySpeedSlider(av)
+        applyEasySpeedSlider(av)
 
         speedButtons.forEach { (speed, button) ->
+            val enabled = av.enabledSpeedButtons.contains(speed)
+            button.isEnabled = enabled
+            button.alpha = if (enabled) 1f else 0.45f
+        }
+        easySpeedButtons.forEach { (speed, button) ->
             val enabled = av.enabledSpeedButtons.contains(speed)
             button.isEnabled = enabled
             button.alpha = if (enabled) 1f else 0.45f
@@ -269,6 +421,32 @@ class MainActivity : AppCompatActivity() {
         tvSpeedModifier.text = "${sliderSpeedModifier.value.toInt()} km/h"
     }
 
+    private fun applyEasySpeedSlider(av: CommandAvailability) {
+        if (!av.hasSpeeds) {
+            sliderEasySpeedModifier.valueFrom = 0f
+            sliderEasySpeedModifier.valueTo = 1f
+            sliderEasySpeedModifier.stepSize = 1f
+            sliderEasySpeedModifier.value = 0f
+            sliderEasySpeedModifier.isEnabled = false
+            tvEasySpeedModifier.text = "nicht verfügbar"
+            return
+        }
+
+        val range = av.speedRange
+        val nextValue = sliderEasySpeedModifier.value
+            .toInt()
+            .coerceIn(range.first, range.last)
+            .toFloat()
+        sliderEasySpeedModifier.valueFrom = minOf(sliderEasySpeedModifier.value, range.first.toFloat())
+        sliderEasySpeedModifier.valueTo = maxOf(sliderEasySpeedModifier.value, range.last.toFloat())
+        sliderEasySpeedModifier.stepSize = 1f
+        sliderEasySpeedModifier.value = nextValue
+        sliderEasySpeedModifier.valueFrom = range.first.toFloat()
+        sliderEasySpeedModifier.valueTo = range.last.toFloat()
+        sliderEasySpeedModifier.isEnabled = av.speedEnabled
+        tvEasySpeedModifier.text = "${nextValue.toInt()} km/h"
+    }
+
     private fun updateDashboard(telemetry: ScooterTelemetry) {
         tvHeaderSpeed.text = telemetry.formattedSpeed
         telemetry.lightOn?.let { lightOn ->
@@ -282,12 +460,31 @@ class MainActivity : AppCompatActivity() {
         tvTripValue.text = TelemetryFormatter.trip(telemetry)
         tvModeValue.text = TelemetryFormatter.mode(telemetry)
         tvHeaderTelemetryDetails.text = TelemetryFormatter.secondaryDetails(telemetry)
+        tvEasySpeed.text = telemetry.speedKmh?.let { String.format(Locale.US, "%.1f", it) } ?: "0.0"
+        tvEasyVoltage.text = TelemetryFormatter.voltage(telemetry)
+        tvEasyMode.text = telemetry.speedMode?.let { "Mode $it" } ?: TelemetryFormatter.PLACEHOLDER
+        tvEasyBatteryValue.text = TelemetryFormatter.battery(telemetry)
+        tvEasyVoltageDetail.text = TelemetryFormatter.voltage(telemetry)
+        tvEasyCurrentValue.text = TelemetryFormatter.current(telemetry)
+        tvEasyRangeValue.text = TelemetryFormatter.range(telemetry)
+        tvEasyTripValue.text = TelemetryFormatter.trip(telemetry)
+        tvEasyModeValue.text = TelemetryFormatter.mode(telemetry)
+        tvEasyTelemetryDetails.text = buildString {
+            append(TelemetryFormatter.secondaryDetails(telemetry))
+            telemetry.lightOn?.let { append(if (it) "   •   Licht an" else "   •   Licht aus") }
+        }
+        tvNewGuiPowerBadge.text = if (telemetry.voltageV != null && telemetry.currentA != null) {
+            String.format(Locale.US, "%.1f W", telemetry.voltageV * telemetry.currentA)
+        } else {
+            "— W"
+        }
 
         val speedPercent = telemetry.speedKmh?.let {
             ((it / SPEED_GAUGE_MAX_KMH) * 100f).toInt().coerceIn(0, 100)
         } ?: 0
         progressSpeed.progress = speedPercent
         progressBattery.progress = telemetry.batteryLevel?.coerceIn(0, 100) ?: 0
+        progressEasyBattery.progress = telemetry.batteryLevel?.coerceIn(0, 100) ?: 0
     }
 
     private fun resetTelemetryHeader() {
@@ -299,6 +496,18 @@ class MainActivity : AppCompatActivity() {
         tvRangeValue.text = TelemetryFormatter.PLACEHOLDER
         tvTripValue.text = TelemetryFormatter.PLACEHOLDER
         tvModeValue.text = TelemetryFormatter.PLACEHOLDER
+        tvEasySpeed.text = "0.0"
+        tvEasyVoltage.text = TelemetryFormatter.PLACEHOLDER
+        tvEasyMode.text = TelemetryFormatter.PLACEHOLDER
+        tvEasyBatteryValue.text = TelemetryFormatter.PLACEHOLDER
+        tvEasyVoltageDetail.text = TelemetryFormatter.PLACEHOLDER
+        tvEasyCurrentValue.text = TelemetryFormatter.PLACEHOLDER
+        tvEasyRangeValue.text = TelemetryFormatter.PLACEHOLDER
+        tvEasyTripValue.text = TelemetryFormatter.PLACEHOLDER
+        tvEasyModeValue.text = TelemetryFormatter.PLACEHOLDER
+        tvEasyTelemetryDetails.text = "Noch keine Telemetrie"
+        tvNewGuiPowerBadge.text = "— W"
+        progressEasyBattery.progress = 0
         progressSpeed.progress = 0
         progressBattery.progress = 0
         imgLightOn.visibility = View.GONE
@@ -352,6 +561,9 @@ class MainActivity : AppCompatActivity() {
         cbMoreSpeed.setOnCheckedChangeListener { _, isChecked ->
             prefs.edit().putBoolean(KEY_MORE_SPEED, isChecked).apply()
             viewModel.setMoreSpeed(isChecked)
+            if (::cbEasyMoreSpeed.isInitialized && cbEasyMoreSpeed.isChecked != isChecked) {
+                cbEasyMoreSpeed.isChecked = isChecked
+            }
         }
 
         switchAdvanced.setOnCheckedChangeListener { _, isChecked ->
@@ -378,6 +590,105 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupEasyMode() {
+        Configuration.getInstance().apply {
+            load(applicationContext, getSharedPreferences("osmdroid", Context.MODE_PRIVATE))
+            userAgentValue = packageName
+        }
+        easyMap.apply {
+            setTileSource(TileSourceFactory.MAPNIK)
+            setMultiTouchControls(true)
+            setTilesScaledToDpi(true)
+            zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
+            overlays.add(RotationGestureOverlay(this).apply { isEnabled = true })
+            controller.setZoom(5.5)
+            controller.setCenter(GeoPoint(51.1657, 10.4515))
+        }
+
+        easyBottomSheetBehavior = BottomSheetBehavior.from(findViewById<View>(R.id.easyFooter)).apply {
+            peekHeight = 132.dp
+            isHideable = false
+            isFitToContents = false
+            expandedOffset = 72.dp
+            isDraggable = true
+            state = BottomSheetBehavior.STATE_COLLAPSED
+        }
+
+        (cardEasyAdvanced.parent as? LinearLayout)?.let { parent ->
+            parent.removeView(cardEasyAdvanced)
+            parent.addView(cardEasyAdvanced, 2)
+        }
+
+        findViewById<MaterialButton>(R.id.btnEasyBack).setOnClickListener {
+            openModelSelection(required = false)
+        }
+
+        findViewById<MaterialButton>(R.id.btnEasySettings).setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
+        tvEasyConnectionStatus.setOnClickListener {
+            if (connectionState == ConnectionState.DISCONNECTED) connectLastDeviceOrPick()
+        }
+        tvEasyLocationHint.setOnClickListener { ensureLocationPermission(forceRequest = true) }
+
+        btnEasyECO.setOnClickListener { viewModel.sendEco() }
+        btnEasyNormal.setOnClickListener { viewModel.sendNormal() }
+        btnEasySport.setOnClickListener { viewModel.sendSport() }
+        btnEasyDev.setOnClickListener { viewModel.sendDev() }
+        btnEasyLock.setOnClickListener { viewModel.sendLock() }
+        btnEasyUnlock.setOnClickListener { viewModel.sendUnlock() }
+        easySpeedButtons.forEach { (speed, button) ->
+            button.setOnClickListener { viewModel.sendSpeed(speed) }
+        }
+        sliderEasySpeedModifier.addOnChangeListener { _, value, fromUser ->
+            if (!latestAvailability.hasSpeeds) return@addOnChangeListener
+            val range = latestAvailability.speedRange
+            val speed = value.toInt().coerceIn(range.first, range.last)
+            tvEasySpeedModifier.text = "$speed km/h"
+            if (fromUser) viewModel.sendSpeed(speed)
+        }
+        btnEasyConnect.setOnClickListener {
+            if (connectionState == ConnectionState.DISCONNECTED) connectLastDeviceOrPick()
+        }
+        btnEasyChangeDevice.setOnClickListener {
+            doDisconnect(showToast = false)
+            pickDevice()
+        }
+        btnEasyDisconnect.setOnClickListener { doDisconnect(showToast = true) }
+
+        cbEasyMoreSpeed.isChecked = prefs.getBoolean(KEY_MORE_SPEED, false)
+        cbEasyMoreSpeed.setOnCheckedChangeListener { _, isChecked ->
+            if (cbMoreSpeed.isChecked != isChecked) {
+                cbMoreSpeed.isChecked = isChecked
+            }
+        }
+        switchEasyAdvanced.setOnCheckedChangeListener { _, isChecked ->
+            easyAdvancedContainer.visibility = if (isChecked) View.VISIBLE else View.GONE
+            easyAdvancedContainer.requestLayout()
+            if (isChecked) {
+                easyBottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+                easySheetScroll.post {
+                    easySheetScroll.smoothScrollTo(0, (cardEasyAdvanced.top - 8.dp).coerceAtLeast(0))
+                }
+            }
+        }
+        easyAdvancedModeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                if (switchEasyAdvanced.isChecked) viewModel.sendAdvancedMode(position + 1)
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+        }
+        btnEasySendHex.setOnClickListener {
+            val hex = txtEasyCmdHex.text.toString().trim()
+            if (hex.isEmpty()) {
+                Toast.makeText(this, "Bitte Hex eingeben", Toast.LENGTH_SHORT).show()
+            } else {
+                viewModel.sendCustomHex(hex)
+            }
+        }
+    }
+
     private fun buildModeSpinner(maxAdvancedMode: Int) {
         val labels = if (maxAdvancedMode > 0) {
             (1..maxAdvancedMode).map { "Mode $it" }
@@ -388,33 +699,132 @@ class MainActivity : AppCompatActivity() {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerModes.adapter = adapter
         spinnerModes.isEnabled = maxAdvancedMode > 0
+        easyAdvancedModeSpinner.adapter = adapter
+        easyAdvancedModeSpinner.isEnabled = maxAdvancedMode > 0
     }
 
     private fun buildExtraCommands(commands: List<NamedScooterCommand>) {
-        extraCommandsContainer.removeAllViews()
-        val hasExtraCommands = commands.isNotEmpty()
-        tvExtraCommandsLabel.visibility = if (hasExtraCommands) View.VISIBLE else View.GONE
-        extraCommandsContainer.visibility = if (hasExtraCommands) View.VISIBLE else View.GONE
+        renderExtraCommands(extraCommandsContainer, tvExtraCommandsLabel, commands)
+        renderExtraCommands(easyExtraCommandsContainer, tvEasyExtraCommandsLabel, commands)
+    }
+
+    private fun renderExtraCommands(
+        container: LinearLayout,
+        label: TextView,
+        commands: List<NamedScooterCommand>
+    ) {
+        container.removeAllViews()
+        val hasCommands = commands.isNotEmpty()
+        label.visibility = if (hasCommands) View.VISIBLE else View.GONE
+        container.visibility = if (hasCommands) View.VISIBLE else View.GONE
 
         commands.forEach { command ->
-            val button = MaterialButton(this).apply {
+            container.addView(MaterialButton(this).apply {
                 text = command.label
+                setTextColor(ContextCompat.getColor(this@MainActivity, R.color.colorOnSecondary))
+                backgroundTintList = ColorStateList.valueOf(
+                    ContextCompat.getColor(this@MainActivity, R.color.colorSecondary)
+                )
+                cornerRadius = 12.dp
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 ).also { it.topMargin = 6.dp }
                 setOnClickListener { viewModel.sendExtra(command) }
-            }
-            extraCommandsContainer.addView(button)
+            })
         }
     }
 
     private fun applyAdvancedPreference() {
         val enabled = prefs.getBoolean(KEY_ADVANCED_OPTIONS, false)
         cardAdvanced.visibility = if (enabled) View.VISIBLE else View.GONE
+        cardEasyAdvanced.visibility = if (enabled) View.VISIBLE else View.GONE
         if (!enabled) {
             switchAdvanced.isChecked = false
             advancedContainer.visibility = View.GONE
+            switchEasyAdvanced.isChecked = false
+            easyAdvancedContainer.visibility = View.GONE
+        }
+    }
+
+    private fun applyNewGuiPreference(requestLocation: Boolean) {
+        val hasScooter = prefs.getString(KEY_DEVICE_ADDRESS, null) != null &&
+            prefs.getString(KEY_MODEL_ID, null) != null
+        newGuiVisible = prefs.getBoolean(AppPreferences.KEY_NEW_GUI, true) && hasScooter
+
+        mainScroll.visibility = if (newGuiVisible) View.GONE else View.VISIBLE
+        easyModeContainer.visibility = if (newGuiVisible) View.VISIBLE else View.GONE
+        tvNewGuiPowerBadge.visibility = if (
+            newGuiVisible && prefs.getBoolean(AppPreferences.KEY_WATT_BADGE, false)
+        ) View.VISIBLE else View.GONE
+
+        if (newGuiVisible) {
+            easyMap.onResume()
+            if (requestLocation) ensureLocationPermission()
+        } else {
+            myLocationOverlay?.disableMyLocation()
+        }
+    }
+
+    private fun ensureLocationPermission(forceRequest: Boolean = false) {
+        if (!newGuiVisible) return
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            startLocationOverlay()
+            return
+        }
+
+        tvEasyLocationHint.visibility = View.VISIBLE
+        tvEasyLocationHint.text = "Standortfreigabe erforderlich"
+        if (locationPermissionRequested && !forceRequest) return
+        locationPermissionRequested = true
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ),
+            REQ_LOCATION_PERMS
+        )
+    }
+
+    private fun startLocationOverlay() {
+        if (!newGuiVisible) return
+
+        val overlay = myLocationOverlay ?: MyLocationNewOverlay(
+            GpsMyLocationProvider(applicationContext),
+            easyMap
+        ).also {
+            val driverArrow = drawableToBitmap(R.drawable.ic_driver_arrow_blue, 48)
+            it.setPersonIcon(driverArrow)
+            it.setDirectionIcon(driverArrow)
+            it.setPersonAnchor(0.5f, 0.5f)
+            it.setDirectionAnchor(0.5f, 0.5f)
+            myLocationOverlay = it
+            easyMap.overlays.add(it)
+        }
+
+        tvEasyLocationHint.visibility = View.VISIBLE
+        tvEasyLocationHint.text = "Standort wird gesucht …"
+        overlay.enableMyLocation()
+        overlay.enableFollowLocation()
+        overlay.runOnFirstFix {
+            runOnUiThread {
+                val location = overlay.myLocation ?: return@runOnUiThread
+                easyMap.controller.animateTo(location)
+                easyMap.controller.setZoom(17.5)
+                tvEasyLocationHint.visibility = View.GONE
+            }
+        }
+    }
+
+    private fun drawableToBitmap(drawableRes: Int, sizeDp: Int): Bitmap {
+        val sizePx = sizeDp.dp
+        val drawable = requireNotNull(AppCompatResources.getDrawable(this, drawableRes))
+        return Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888).also { bitmap ->
+            drawable.setBounds(0, 0, sizePx, sizePx)
+            drawable.draw(Canvas(bitmap))
         }
     }
 
@@ -452,7 +862,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ---------------------------------------------------------------------
-    // Erst-Setup: Disclaimer, Berechtigungen, Modell, Auto-Reconnect
+    // Erst-Setup: Disclaimer, Berechtigungen, Scan, Modell, Auto-Reconnect
     // ---------------------------------------------------------------------
 
     private fun runInitialSetup() {
@@ -467,7 +877,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (prefs.getString(KEY_MODEL_ID, null) == null) {
-            openModelSelection(required = true)
+            // Beim allerersten Start wird zuerst ein Scooter gesucht. Erst
+            // nachdem das Geraet gewaehlt wurde, folgt die Modellauswahl.
+            if (!initialDeviceScanInProgress && pendingInitialDeviceAddress == null) {
+                initialDeviceScanInProgress = true
+                pickDevice()
+            }
             return
         }
 
@@ -517,6 +932,18 @@ class MainActivity : AppCompatActivity() {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQ_LOCATION_PERMS) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+                android.content.pm.PackageManager.PERMISSION_GRANTED
+            ) {
+                locationPermissionRequested = false
+                startLocationOverlay()
+            } else {
+                tvEasyLocationHint.visibility = View.VISIBLE
+                tvEasyLocationHint.text = "Ohne Standortfreigabe kann deine Position nicht angezeigt werden"
+            }
+            return
+        }
         if (requestCode != REQ_BLE_PERMS) return
 
         if (grantResults.all { it == android.content.pm.PackageManager.PERMISSION_GRANTED }) {
@@ -536,19 +963,38 @@ class MainActivity : AppCompatActivity() {
                 prefs.edit().putString(KEY_MODEL_ID, model.id).apply()
                 viewModel.setModel(model)
                 applyAdvancedPreference()
-                if (!startupCompleted) runInitialSetup()
+                val initialAddress = pendingInitialDeviceAddress
+                if (!startupCompleted && initialAddress != null) {
+                    pendingInitialDeviceAddress = null
+                    startupCompleted = true
+                    autoReconnectAttempted = true
+                    prefs.edit().putString(KEY_DEVICE_ADDRESS, initialAddress).apply()
+                    applyNewGuiPreference(requestLocation = true)
+                    viewModel.connect(initialAddress)
+                } else if (!startupCompleted) {
+                    runInitialSetup()
+                }
             } else if (startupCompleted) {
                 applyAdvancedPreference()
             } else {
+                pendingInitialDeviceAddress = null
                 finish()
             }
             return
         }
 
-        if (requestCode != REQ_PICK_DEVICE || resultCode != Activity.RESULT_OK) return
+        if (requestCode != REQ_PICK_DEVICE) return
+        initialDeviceScanInProgress = false
+        if (resultCode != Activity.RESULT_OK) return
 
         val address = data?.getStringExtra(EXTRA_DEVICE_ADDRESS) ?: return
         val inferredModelId = data.getStringExtra(EXTRA_MODEL_ID)
+        if (!startupCompleted && prefs.getString(KEY_MODEL_ID, null) == null) {
+            pendingInitialDeviceAddress = address
+            openModelSelection(required = true)
+            return
+        }
+
         if (inferredModelId == SO4_FAMILY_MODEL_ID) {
             showSo4VariantDialog(address)
         } else {
@@ -557,7 +1003,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showSo4VariantDialog(address: String) {
-        val modelIds = arrayOf("so4", "so4_5_1", "so4_5_2")
+        val modelIds = arrayOf("s04_pro_gen2", "s04_pro_gen3", "so4", "so4_5_1", "so4_5_2")
         val labels = modelIds
             .map { ScooterCommandCatalog.findModel(it).displayName }
             .toTypedArray()
@@ -571,6 +1017,12 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean(STATE_INITIAL_SCAN_IN_PROGRESS, initialDeviceScanInProgress)
+        outState.putString(STATE_PENDING_DEVICE_ADDRESS, pendingInitialDeviceAddress)
+        super.onSaveInstanceState(outState)
+    }
+
     private fun applyInferredModelAndConnect(address: String, inferredModelId: String?) {
         val prefsEdit = prefs.edit().putString(KEY_DEVICE_ADDRESS, address)
         if (inferredModelId != null) {
@@ -582,6 +1034,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
         prefsEdit.apply()
+        applyNewGuiPreference(requestLocation = true)
         viewModel.connect(address)
     }
 
@@ -598,9 +1051,12 @@ class MainActivity : AppCompatActivity() {
         private const val EXTRA_MODEL_ID = "MODEL_ID"
         private const val EXTRA_MODEL_REQUIRED = "MODEL_REQUIRED"
         private const val SO4_FAMILY_MODEL_ID = "so4_family"
+        private const val STATE_INITIAL_SCAN_IN_PROGRESS = "initial_scan_in_progress"
+        private const val STATE_PENDING_DEVICE_ADDRESS = "pending_initial_device_address"
         private const val REQ_BLE_PERMS = 2001
         private const val REQ_PICK_DEVICE = 2002
         private const val REQ_PICK_MODEL = 2003
+        private const val REQ_LOCATION_PERMS = 2004
 
         /** Anzeige-Maximum der Speed-Gauge (reine Skala fuer die Balkenanzeige). */
         private const val SPEED_GAUGE_MAX_KMH = 40f

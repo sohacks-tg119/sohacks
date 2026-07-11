@@ -60,9 +60,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application), S
     // ---------------------------------------------------------------------
 
     fun setModel(model: ScooterModel) {
+        val modelChanged = selectedModel.id != model.id
         selectedModel = model
         ble.model = model
-        resetProtocolState()
+        if (modelChanged) {
+            resetProtocolState()
+            telemetryFrameBuffer.clear()
+            _telemetry.value = null
+            _bleOutput.value = null
+        }
         _model.value = model
         publishAvailability()
     }

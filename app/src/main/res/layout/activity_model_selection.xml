@@ -31,22 +31,28 @@
             android:textColor="@color/textColorSecondary"
             android:textSize="14sp" />
 
-        <CheckBox
-            android:id="@+id/cbAdvancedOptions"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:buttonTint="@color/colorSecondary"
-            android:checked="false"
-            android:text="Erweiterte Optionen aktivieren"
-            android:textColor="@color/colorOnBackground"
-            android:textSize="14sp" />
-
         <LinearLayout
             android:id="@+id/modelListContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
             android:orientation="vertical" />
+
+        <TextView
+            android:id="@+id/tvOpenSettings"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="10dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:text="Einstellungen"
+            android:textColor="@color/colorSecondary"
+            android:textSize="15sp"
+            android:textStyle="bold" />
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

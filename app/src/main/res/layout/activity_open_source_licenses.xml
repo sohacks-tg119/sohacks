@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorBackground"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Open-Source-Lizenzen"
+            android:textColor="@color/colorOnBackground"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Diese App verwendet freie Software und OpenStreetMap-Daten. Die folgenden Hinweise beziehen sich auf die mit Version 2.6 ausgelieferten Runtime-Komponenten."
+            android:textColor="@color/textColorSecondary"
+            android:textSize="14sp" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            app:cardBackgroundColor="@color/colorSurface"
+            app:cardCornerRadius="12dp"
+            app:strokeColor="@color/colorOutline"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="SoHacks 2.6"
+                    android:textColor="@color/colorOnSurface"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:text="Lizenz: GNU General Public License, Version 3\nDer Quellcode und die Lizenz sind über das öffentliche Projekt-Repository verfügbar."
+                    android:textColor="@color/textColorSecondary"
+                    android:textSize="13sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="end"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnLicenseSource"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="44dp"
+                        android:text="Quellcode"
+                        android:textColor="@color/colorSecondary" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnLicenseGpl"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="44dp"
+                        android:text="GPLv3 lesen"
+                        android:textColor="@color/colorSecondary" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="@color/colorSurface"
+            app:cardCornerRadius="12dp"
+            app:strokeColor="@color/colorOutline"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Apache License 2.0"
+                    android:textColor="@color/colorOnSurface"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="7dp"
+                    android:text="• AndroidX Core KTX 1.13.1\n• AndroidX AppCompat 1.7.0\n• AndroidX Activity 1.9.1\n• AndroidX ConstraintLayout 2.1.4\n• AndroidX Lifecycle 2.8.4\n• Material Components for Android 1.12.0\n• Kotlin Standard Library 1.9.0\n• Kotlin Coroutines 1.7.3\n• JetBrains Annotations 23.0.0\n• Error Prone Annotations 2.15.0\n• Guava ListenableFuture 1.0\n• osmdroid 6.1.20\n\nEnthalten sind außerdem die transitiven AndroidX-Unterkomponenten dieser Bibliotheken."
+                    android:textColor="@color/textColorSecondary"
+                    android:textSize="13sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnLicenseApache"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:layout_gravity="end"
+                    android:layout_marginTop="8dp"
+                    android:text="Lizenztext lesen"
+                    android:textColor="@color/colorSecondary" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="@color/colorSurface"
+            app:cardCornerRadius="12dp"
+            app:strokeColor="@color/colorOutline"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="OpenStreetMap"
+                    android:textColor="@color/colorOnSurface"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:text="Kartendaten © OpenStreetMap-Mitwirkende. Die Daten stehen unter der Open Database License (ODbL) 1.0. Die Kartendarstellung erfolgt über osmdroid mit OpenStreetMap-Kacheln."
+                    android:textColor="@color/textColorSecondary"
+                    android:textSize="13sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnLicenseOsm"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:layout_gravity="end"
+                    android:layout_marginTop="8dp"
+                    android:text="Attribution &amp; ODbL"
+                    android:textColor="@color/colorSecondary" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Die jeweiligen Rechteinhaber behalten sämtliche Rechte an ihren Projekten. Die Nennung bedeutet keine Unterstützung oder Verbindung mit SoHacks."
+            android:textColor="@color/textColorTertiary"
+            android:textSize="12sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLicensesBack"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_gravity="end"
+            android:layout_marginTop="12dp"
+            android:text="Zurück"
+            android:textColor="@color/colorSecondary" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

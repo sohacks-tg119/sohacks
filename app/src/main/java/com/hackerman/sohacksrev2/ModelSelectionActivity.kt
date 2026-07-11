@@ -3,10 +3,10 @@ package com.hackerman.sohacksrev2
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.graphics.Paint
 import android.graphics.Typeface
 import android.os.Bundle
 import android.view.ViewGroup
-import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -16,7 +16,6 @@ import com.google.android.material.card.MaterialCardView
 class ModelSelectionActivity : AppCompatActivity() {
 
     private lateinit var modelListContainer: LinearLayout
-    private lateinit var cbAdvancedOptions: CheckBox
     private val required: Boolean by lazy { intent.getBooleanExtra(EXTRA_MODEL_REQUIRED, false) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,10 +23,19 @@ class ModelSelectionActivity : AppCompatActivity() {
         setContentView(R.layout.activity_model_selection)
 
         modelListContainer = findViewById(R.id.modelListContainer)
-        cbAdvancedOptions = findViewById(R.id.cbAdvancedOptions)
+        findViewById<TextView>(R.id.tvOpenSettings).apply {
+            paintFlags = paintFlags or Paint.UNDERLINE_TEXT_FLAG
+            setOnClickListener {
+                startActivity(Intent(this@ModelSelectionActivity, SettingsActivity::class.java))
+            }
+        }
 
-        setupAdvancedCheckbox()
         renderModels()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        AppPreferences.applyKeepScreenOn(this)
     }
 
     override fun onBackPressed() {
@@ -37,14 +45,6 @@ class ModelSelectionActivity : AppCompatActivity() {
         } else {
             setResult(Activity.RESULT_OK, Intent().putExtra(EXTRA_MODEL_ID, savedModelId()))
             finish()
-        }
-    }
-
-    private fun setupAdvancedCheckbox() {
-        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        cbAdvancedOptions.isChecked = prefs.getBoolean(KEY_ADVANCED_OPTIONS, false)
-        cbAdvancedOptions.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean(KEY_ADVANCED_OPTIONS, isChecked).apply()
         }
     }
 
@@ -103,7 +103,6 @@ class ModelSelectionActivity : AppCompatActivity() {
         getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
             .putString(KEY_MODEL_ID, model.id)
-            .putBoolean(KEY_ADVANCED_OPTIONS, cbAdvancedOptions.isChecked)
             .apply()
 
         setResult(Activity.RESULT_OK, Intent().putExtra(EXTRA_MODEL_ID, model.id))
@@ -119,7 +118,6 @@ class ModelSelectionActivity : AppCompatActivity() {
     companion object {
         private const val PREFS_NAME = "BLE_Prefs"
         private const val KEY_MODEL_ID = "model_id"
-        private const val KEY_ADVANCED_OPTIONS = "advanced_options_enabled"
         private const val EXTRA_MODEL_ID = "MODEL_ID"
         private const val EXTRA_MODEL_REQUIRED = "MODEL_REQUIRED"
     }
