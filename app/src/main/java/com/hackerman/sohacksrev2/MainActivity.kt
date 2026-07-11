@@ -10,6 +10,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -748,9 +749,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun applyNewGuiPreference(requestLocation: Boolean) {
-        val hasScooter = prefs.getString(KEY_DEVICE_ADDRESS, null) != null &&
-            prefs.getString(KEY_MODEL_ID, null) != null
-        newGuiVisible = prefs.getBoolean(AppPreferences.KEY_NEW_GUI, true) && hasScooter
+        // Das neue GUI ist standardmaessig aktiv und haengt nur noch am
+        // Nutzer-Schalter (KEY_NEW_GUI). Es wird also auch angezeigt, wenn noch
+        // nie ein Scooter verbunden war. Das Umschalten auf Legacy bleibt ueber
+        // die Einstellungen moeglich (Schalter aus -> false).
+        newGuiVisible = prefs.getBoolean(AppPreferences.KEY_NEW_GUI, true)
 
         mainScroll.visibility = if (newGuiVisible) View.GONE else View.VISIBLE
         easyModeContainer.visibility = if (newGuiVisible) View.VISIBLE else View.GONE
@@ -759,7 +762,10 @@ class MainActivity : AppCompatActivity() {
         ) View.VISIBLE else View.GONE
 
         if (newGuiVisible) {
-            easyMap.onResume()
+            // Edge-Case: frische Installation ohne verbundenen Scooter/Permission.
+            // Die Karte darf beim Aktivieren des GUIs niemals die App abschiessen.
+            runCatching { easyMap.onResume() }
+                .onFailure { Log.w(TAG, "easyMap.onResume() fehlgeschlagen", it) }
             if (requestLocation) ensureLocationPermission()
         } else {
             myLocationOverlay?.disableMyLocation()
@@ -792,30 +798,39 @@ class MainActivity : AppCompatActivity() {
     private fun startLocationOverlay() {
         if (!newGuiVisible) return
 
-        val overlay = myLocationOverlay ?: MyLocationNewOverlay(
-            GpsMyLocationProvider(applicationContext),
-            easyMap
-        ).also {
-            val driverArrow = drawableToBitmap(R.drawable.ic_driver_arrow_blue, 48)
-            it.setPersonIcon(driverArrow)
-            it.setDirectionIcon(driverArrow)
-            it.setPersonAnchor(0.5f, 0.5f)
-            it.setDirectionAnchor(0.5f, 0.5f)
-            myLocationOverlay = it
-            easyMap.overlays.add(it)
-        }
-
-        tvEasyLocationHint.visibility = View.VISIBLE
-        tvEasyLocationHint.text = "Standort wird gesucht …"
-        overlay.enableMyLocation()
-        overlay.enableFollowLocation()
-        overlay.runOnFirstFix {
-            runOnUiThread {
-                val location = overlay.myLocation ?: return@runOnUiThread
-                easyMap.controller.animateTo(location)
-                easyMap.controller.setZoom(17.5)
-                tvEasyLocationHint.visibility = View.GONE
+        // Edge-Case-Absicherung: Overlay-Aufbau und GPS-Start duerfen bei fehlender
+        // Berechtigung oder unerwartetem Zustand (frische Installation, noch kein
+        // Scooter) niemals crashen – im Fehlerfall bleibt nur der Standort-Hinweis.
+        runCatching {
+            val overlay = myLocationOverlay ?: MyLocationNewOverlay(
+                GpsMyLocationProvider(applicationContext),
+                easyMap
+            ).also {
+                val driverArrow = drawableToBitmap(R.drawable.ic_driver_arrow_blue, 48)
+                it.setPersonIcon(driverArrow)
+                it.setDirectionIcon(driverArrow)
+                it.setPersonAnchor(0.5f, 0.5f)
+                it.setDirectionAnchor(0.5f, 0.5f)
+                myLocationOverlay = it
+                easyMap.overlays.add(it)
             }
+
+            tvEasyLocationHint.visibility = View.VISIBLE
+            tvEasyLocationHint.text = "Standort wird gesucht …"
+            overlay.enableMyLocation()
+            overlay.enableFollowLocation()
+            overlay.runOnFirstFix {
+                runOnUiThread {
+                    val location = overlay.myLocation ?: return@runOnUiThread
+                    easyMap.controller.animateTo(location)
+                    easyMap.controller.setZoom(17.5)
+                    tvEasyLocationHint.visibility = View.GONE
+                }
+            }
+        }.onFailure {
+            Log.w(TAG, "Standort-Overlay konnte nicht gestartet werden", it)
+            tvEasyLocationHint.visibility = View.VISIBLE
+            tvEasyLocationHint.text = "Standort momentan nicht verfügbar"
         }
     }
 
@@ -1041,6 +1056,7 @@ class MainActivity : AppCompatActivity() {
     private val Int.dp: Int get() = (this * resources.displayMetrics.density).toInt()
 
     companion object {
+        private const val TAG = "MainActivity"
         private const val PREFS_NAME = "BLE_Prefs"
         private const val KEY_MODEL_ID = "model_id"
         private const val KEY_DEVICE_ADDRESS = "device_address"
