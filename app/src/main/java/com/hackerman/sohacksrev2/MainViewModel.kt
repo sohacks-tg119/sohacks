@@ -140,6 +140,30 @@ class MainViewModel(application: Application) : AndroidViewModel(application), S
         sendHex(hex)
     }
 
+    fun executeQuickAction(action: QuickBubbleAction) {
+        when (action.type) {
+            QuickBubbleActionType.ECO -> sendEco()
+            QuickBubbleActionType.NORMAL -> sendNormal()
+            QuickBubbleActionType.SPORT -> sendSport()
+            QuickBubbleActionType.DEV -> sendDev()
+            QuickBubbleActionType.LOCK -> sendLock()
+            QuickBubbleActionType.UNLOCK -> sendUnlock()
+            QuickBubbleActionType.SPEED -> {
+                val speed = action.value?.toIntOrNull()
+                if (speed == null) toast("Ungültige Geschwindigkeit") else sendSpeed(speed)
+            }
+            QuickBubbleActionType.ADVANCED_MODE -> {
+                val mode = action.value?.toIntOrNull()
+                if (mode == null) toast("Ungültiger Mode") else sendAdvancedMode(mode)
+            }
+            QuickBubbleActionType.EXTRA -> {
+                val command = selectedModel.extraCommands.firstOrNull { it.id == action.value }
+                if (command == null) toast("Kommando nicht verfügbar") else sendExtra(command)
+            }
+            QuickBubbleActionType.EXIT_APP -> Unit
+        }
+    }
+
     // ---------------------------------------------------------------------
     // ScooterBleManager.Listener
     // ---------------------------------------------------------------------

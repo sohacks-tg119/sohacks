@@ -52,6 +52,9 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         findViewById<MaterialButton>(R.id.btnSettingsBack).setOnClickListener { finish() }
+        findViewById<MaterialButton>(R.id.btnQuickBubbleSettings).setOnClickListener {
+            startActivity(Intent(this, QuickBubbleSettingsActivity::class.java))
+        }
         findViewById<MaterialButton>(R.id.btnOpenSourceLicenses).setOnClickListener {
             startActivity(Intent(this, OpenSourceLicensesActivity::class.java))
         }
