@@ -24,7 +24,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="Diese App verwendet freie Software und OpenStreetMap-Daten. Die folgenden Hinweise beziehen sich auf die mit Version 2.6 ausgelieferten Runtime-Komponenten."
+            android:text="Diese App verwendet freie Software und OpenStreetMap-Daten. Die folgenden Hinweise beziehen sich auf die mit Version 2.7 ausgelieferten Runtime-Komponenten."
             android:textColor="@color/textColorSecondary"
             android:textSize="14sp" />
 
@@ -46,7 +46,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="SoHacks 2.6"
+                    android:text="SoHacks 2.7"
                     android:textColor="@color/colorOnSurface"
                     android:textSize="17sp"
                     android:textStyle="bold" />

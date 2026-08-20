@@ -34,6 +34,8 @@
         <activity android:name=".DeviceSelectionActivity1" android:exported="false" />
         <activity android:name=".ModelSelectionActivity" android:exported="false" />
         <activity android:name=".SettingsActivity" android:exported="false" />
+        <activity android:name=".QuickBubbleSettingsActivity" android:exported="false" />
+        <activity android:name=".QuickBubbleEditorActivity" android:exported="false" />
         <activity android:name=".OpenSourceLicensesActivity" android:exported="false" />
 
         <activity android:name=".MainActivity" android:exported="true">

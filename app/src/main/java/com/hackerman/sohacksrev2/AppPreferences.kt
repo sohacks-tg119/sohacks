@@ -12,6 +12,8 @@ object AppPreferences {
     // Der gespeicherte Key bleibt fuer bestehende Installationen kompatibel.
     const val KEY_NEW_GUI = "easy_mode_enabled"
     const val KEY_WATT_BADGE = "watt_badge_enabled"
+    const val KEY_MODEL_ID = "model_id"
+    const val KEY_DEVICE_ADDRESS = "device_address"
 
     fun applyKeepScreenOn(activity: Activity) {
         val enabled = activity

@@ -10,12 +10,15 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
@@ -111,6 +114,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mainScroll: View
     private lateinit var easyModeContainer: View
     private lateinit var easyMap: MapView
+    private lateinit var quickBubbleLayer: FrameLayout
     private lateinit var easySheetScroll: NestedScrollView
     private lateinit var easyBottomSheetBehavior: BottomSheetBehavior<View>
     private lateinit var tvEasyConnectionStatus: TextView
@@ -152,6 +156,9 @@ class MainActivity : AppCompatActivity() {
     private var myLocationOverlay: MyLocationNewOverlay? = null
     private var newGuiVisible = false
     private var locationPermissionRequested = false
+    private lateinit var quickBubbleStore: QuickBubbleStore
+    private val quickSequenceHandler = Handler(Looper.getMainLooper())
+    private var quickSequenceRunnable: Runnable? = null
 
     private var startupCompleted = false
     private var autoReconnectAttempted = false
@@ -166,6 +173,7 @@ class MainActivity : AppCompatActivity() {
 
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
         prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        quickBubbleStore = QuickBubbleStore(this)
         initialDeviceScanInProgress = savedInstanceState?.getBoolean(STATE_INITIAL_SCAN_IN_PROGRESS) ?: false
         pendingInitialDeviceAddress = savedInstanceState?.getString(STATE_PENDING_DEVICE_ADDRESS)
 
@@ -194,6 +202,7 @@ class MainActivity : AppCompatActivity() {
         if (::prefs.isInitialized) {
             applyAdvancedPreference()
             applyNewGuiPreference(requestLocation = true)
+            renderQuickBubbles()
         }
     }
 
@@ -204,6 +213,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        quickSequenceRunnable?.let(quickSequenceHandler::removeCallbacks)
         myLocationOverlay?.disableMyLocation()
         if (::easyMap.isInitialized) easyMap.onDetach()
         super.onDestroy()
@@ -267,6 +277,7 @@ class MainActivity : AppCompatActivity() {
 
         easyModeContainer = findViewById(R.id.easyModeContainer)
         easyMap = findViewById(R.id.easyMap)
+        quickBubbleLayer = findViewById(R.id.quickBubbleLayer)
         easySheetScroll = findViewById(R.id.easySheetScroll)
         tvEasyConnectionStatus = findViewById(R.id.tvEasyConnectionStatus)
         tvNewGuiPowerBadge = findViewById(R.id.tvNewGuiPowerBadge)
@@ -356,6 +367,7 @@ class MainActivity : AppCompatActivity() {
         tvAppSubtitle.text = "BLE-Steuerung"
         buildModeSpinner(model.maxAdvancedMode)
         buildExtraCommands(model.extraCommands)
+        renderQuickBubbles()
     }
 
     private fun applyAvailability(av: CommandAvailability) {
@@ -690,6 +702,70 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun renderQuickBubbles() {
+        if (!::quickBubbleLayer.isInitialized || !::quickBubbleStore.isInitialized) return
+        val scope = QuickBubbleScope.current(this)
+        val model = ScooterCommandCatalog.findModel(scope.modelId)
+        val bubbles = quickBubbleStore.load(scope)
+        quickBubbleLayer.removeAllViews()
+
+        bubbles.forEach { bubble ->
+            val bubbleView = QuickBubbleView(this).apply {
+                bind(bubble)
+                contentDescription = buildString {
+                    append(bubble.name)
+                    append(": ")
+                    append(bubble.actions.joinToString(", ") { it.label(model) })
+                }
+                onExecute = { executeQuickBubble(bubble) }
+                onEditModeChanged = { editing ->
+                    if (editing) {
+                        for (index in 0 until quickBubbleLayer.childCount) {
+                            val other = quickBubbleLayer.getChildAt(index) as? QuickBubbleView
+                            if (other !== this) other?.setEditing(false)
+                        }
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Ziehen • mit zwei Fingern skalieren • antippen zum Fertigstellen",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+                onGeometryChanged = { positionX, positionY, sizeDp ->
+                    quickBubbleStore.upsert(
+                        scope,
+                        bubble.copy(
+                            positionX = positionX,
+                            positionY = positionY,
+                            sizeDp = sizeDp
+                        )
+                    )
+                }
+            }
+            quickBubbleLayer.addView(bubbleView)
+        }
+    }
+
+    private fun executeQuickBubble(bubble: QuickBubble) {
+        quickSequenceRunnable?.let(quickSequenceHandler::removeCallbacks)
+        var index = 0
+        lateinit var runner: Runnable
+        runner = Runnable {
+            if (index >= bubble.actions.size) return@Runnable
+            val action = bubble.actions[index++]
+            if (action.type == QuickBubbleActionType.EXIT_APP) {
+                finishAndRemoveTask()
+                return@Runnable
+            }
+            viewModel.executeQuickAction(action)
+            if (index < bubble.actions.size) {
+                quickSequenceHandler.postDelayed(runner, QUICK_ACTION_DELAY_MS)
+            }
+        }
+        quickSequenceRunnable = runner
+        quickSequenceHandler.post(runner)
+    }
+
     private fun buildModeSpinner(maxAdvancedMode: Int) {
         val labels = if (maxAdvancedMode > 0) {
             (1..maxAdvancedMode).map { "Mode $it" }
@@ -984,6 +1060,7 @@ class MainActivity : AppCompatActivity() {
                     startupCompleted = true
                     autoReconnectAttempted = true
                     prefs.edit().putString(KEY_DEVICE_ADDRESS, initialAddress).apply()
+                    renderQuickBubbles()
                     applyNewGuiPreference(requestLocation = true)
                     viewModel.connect(initialAddress)
                 } else if (!startupCompleted) {
@@ -1049,6 +1126,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
         prefsEdit.apply()
+        renderQuickBubbles()
         applyNewGuiPreference(requestLocation = true)
         viewModel.connect(address)
     }
@@ -1073,6 +1151,7 @@ class MainActivity : AppCompatActivity() {
         private const val REQ_PICK_DEVICE = 2002
         private const val REQ_PICK_MODEL = 2003
         private const val REQ_LOCATION_PERMS = 2004
+        private const val QUICK_ACTION_DELAY_MS = 350L
 
         /** Anzeige-Maximum der Speed-Gauge (reine Skala fuer die Balkenanzeige). */
         private const val SPEED_GAUGE_MAX_KMH = 40f
