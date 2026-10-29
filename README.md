@@ -7,6 +7,7 @@ https://github.com/sohacks-tg119/sohacks/releases/
 Tested:
 - SO1
 - SO4 Pro Gen2
+- SO2 Air 3rd Gen WO (lock + ECO/NORMAL/SPORT via the default SO2 Air Gen 3 profile)
 
 Implemented:
 - SO1
@@ -15,7 +16,8 @@ Implemented:
 - SO4 5.1
 - SO4 5.2
 - SO myTier
-- SO2 Air
+- SO2 Air Gen 3 (default `so2_air`; SO4T-v5.2 + TX AES)
+- SO2 Air (dynamic D7) / SO2 Air A0 Test (legacy alternatives)
 - SO3
 - SO4 UL
 - SO6

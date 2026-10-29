@@ -392,8 +392,17 @@ object ScooterCommandCatalog {
         ),
         ScooterModel(
             id = "so2_air",
-            displayName = "SO2 Air",
-            description = "D7 Profil",
+            displayName = "SO2 Air Gen 3",
+            description = "SO2 Air 3rd Gen (WO): SO4T-v5.2 lock/mode/speed commands with TX AES. " +
+                "Verified lock and ride modes against live telemetry; speed writes are sent but may be ignored by firmware.",
+            commands = s04T52Commands,
+            bleProfile = aesV52Profile,
+            protocolFamily = ProtocolFamily.D7_SO4_V51_PLUS
+        ),
+        ScooterModel(
+            id = "so2_air_dynamic",
+            displayName = "SO2 Air (dynamic D7)",
+            description = "Legacy dynamic D7 profile for older SO2 Air firmware if the Gen 3 profile does not fit.",
             commands = dynamicD7Commands,
             protocolFamily = ProtocolFamily.DYNAMIC_D7
         ),

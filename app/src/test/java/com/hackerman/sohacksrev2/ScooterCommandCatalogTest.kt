@@ -11,10 +11,26 @@ class ScooterCommandCatalogTest {
     fun catalog_containsKnownProfilesFromGuide() {
         val ids = ScooterCommandCatalog.models.map { it.id }.toSet()
 
-        assertTrue(ids.containsAll(listOf("so1", "so2_air", "so3", "so4", "so4_5_1", "so4_5_2", "somytier", "so4ul", "so6")))
+        assertTrue(
+            ids.containsAll(
+                listOf(
+                    "so1",
+                    "so2_air",
+                    "so2_air_dynamic",
+                    "so2_air_a0_test",
+                    "so3",
+                    "so4",
+                    "so4_5_1",
+                    "so4_5_2",
+                    "somytier",
+                    "so4ul",
+                    "so6"
+                )
+            )
+        )
         assertNotNull(ScooterCommandCatalog.findModel("s04_pro_gen2"))
         assertNotNull(ScooterCommandCatalog.findModel("s04_pro_gen3"))
-        assertEquals(14, ScooterCommandCatalog.models.size)
+        assertEquals(15, ScooterCommandCatalog.models.size)
     }
 
     @Test
@@ -89,7 +105,7 @@ class ScooterCommandCatalogTest {
 
     @Test
     fun v52Profiles_encryptWritesButDoNotDecryptNotify() {
-        listOf("s04_pro_gen3", "so4_5_2", "somytier").forEach { modelId ->
+        listOf("s04_pro_gen3", "so4_5_2", "somytier", "so2_air").forEach { modelId ->
             val profile = ScooterCommandCatalog.findModel(modelId).bleProfile
 
             assertEquals("30572F52364B3F473050415811632D2B", profile.txAesKey)
@@ -151,8 +167,26 @@ class ScooterCommandCatalogTest {
     }
 
     @Test
-    fun so2AirAndSo3_defaultToA4A2DynamicFamily() {
-        listOf("so2_air", "so3").forEach { modelId ->
+    fun so2AirGen3_usesV52CommandSetWithTxAes() {
+        val model = ScooterCommandCatalog.findModel("so2_air")
+
+        assertEquals("SO2 Air Gen 3", model.displayName)
+        assertEquals(ProtocolFamily.D7_SO4_V51_PLUS, model.protocolFamily)
+        assertEquals("30572F52364B3F473050415811632D2B", model.bleProfile.txAesKey)
+        assertNull(model.bleProfile.rxAesKey)
+        assertEquals("D706A30000A9", model.commands.eco!!.resolve())
+        assertEquals("D706A30001AA", model.commands.normal!!.resolve())
+        assertEquals("D706A30002AB", model.commands.sport!!.resolve())
+        assertEquals("D706A00001A7", model.commands.lock!!.resolve())
+        assertEquals("D706A00000A6", model.commands.unlock!!.resolve())
+        assertEquals("D706A60001AD", model.commands.startupCommand!!.resolve())
+        assertEquals("D707A90000C878", model.speedCommand(20))
+        assertEquals("D707A90000FAAA", model.speedCommand(25))
+    }
+
+    @Test
+    fun so2AirDynamicAndSo3_defaultToA4A2DynamicFamily() {
+        listOf("so2_air_dynamic", "so3").forEach { modelId ->
             val model = ScooterCommandCatalog.findModel(modelId)
             val runtime = CommandRuntimeState(dynamicSecret = 0x7F)
 
